@@ -45,6 +45,6 @@ app.*.map.json
 
 # environment files
 .env
-lib/env.dart
+
 
 
