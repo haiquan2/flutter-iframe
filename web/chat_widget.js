@@ -1,71 +1,48 @@
 (function () {
-  // Get configuration from script tag
-  const script = document.currentScript;
-  const config = {
-    apiUrl: script.getAttribute('data-api-url') || 'flutter-iframe.vercel.app',
-    buttonColor: script.getAttribute('data-button-color') || '#6366F1',
-    buttonSize: parseInt(script.getAttribute('data-button-size')) || 60,
-    iframeWidth: parseInt(script.getAttribute('data-iframe-width')) || 400,
-    iframeHeight: parseInt(script.getAttribute('data-iframe-height')) || 600,
-    buttonIcon: script.getAttribute('data-button-icon') || '💬',
-  };
+  const scriptTag = document.currentScript;
+  const buttonColor = scriptTag.dataset.buttonColor || '#6366F1';
+  const iframeWidth = scriptTag.dataset.iframeWidth || '400';
+  const iframeHeight = scriptTag.dataset.iframeHeight || '600';
 
   // Create floating button
   const button = document.createElement('div');
   button.style.position = 'fixed';
-  button.style.bottom = '20px';
-  button.style.right = '20px';
-  button.style.width = `${config.buttonSize}px`;
-  button.style.height = `${config.buttonSize}px`;
-  button.style.backgroundColor = config.buttonColor;
-  button.style.borderRadius = '50%'; // Always circular
+  button.style.bottom = '24px';
+  button.style.right = '24px';
+  button.style.width = '60px';
+  button.style.height = '60px';
+  button.style.backgroundColor = buttonColor;
+  button.style.borderRadius = '50%';
+  button.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+  button.style.cursor = 'pointer';
+  button.style.zIndex = '9999';
   button.style.display = 'flex';
   button.style.alignItems = 'center';
   button.style.justifyContent = 'center';
-  button.style.cursor = 'pointer';
-  button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-  button.style.zIndex = '10000';
-  button.innerHTML = `<span style="font-size: 24px;">${config.buttonIcon}</span>`;
-  document.body.appendChild(button);
+  button.innerHTML = '<svg fill="white" width="28" height="28" viewBox="0 0 24 24"><path d="M2 21l1.5-5.5c-1.33-1.44-2-3.28-2-5.5 0-4.42 3.58-8 8-8s8 3.58 8 8-3.58 8-8 8c-2.22 0-4.06-.84-5.5-2L2 21z"/></svg>';
 
-  // Create iframe container
-  const iframeContainer = document.createElement('div');
-  iframeContainer.style.position = 'fixed';
-  iframeContainer.style.bottom = `${config.buttonSize + 30}px`;
-  iframeContainer.style.right = '20px';
-  iframeContainer.style.width = `${config.iframeWidth}px`;
-  iframeContainer.style.height = `${config.iframeHeight}px`;
-  iframeContainer.style.display = 'none';
-  iframeContainer.style.zIndex = '10001';
-  iframeContainer.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)';
-  iframeContainer.style.borderRadius = '8px';
-  iframeContainer.style.overflow = 'hidden';
-  iframeContainer.style.backgroundColor = '#FFFFFF';
-  document.body.appendChild(iframeContainer);
-
-  // Create iframe
+  // Create iframe (hidden by default)
   const iframe = document.createElement('iframe');
-  iframe.src = config.apiUrl;
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
+  iframe.src = 'https://flutter-iframe.vercel.app/?iframe=true';
+  iframe.style.position = 'fixed';
+  iframe.style.bottom = '24px';
+  iframe.style.right = '24px';
+  iframe.style.width = '0px';
+  iframe.style.height = '0px';
   iframe.style.border = 'none';
+  iframe.style.borderRadius = '12px';
+  iframe.style.zIndex = '9998';
+  iframe.style.transition = 'all 0.3s ease';
   iframe.allow = 'clipboard-write';
-  iframeContainer.appendChild(iframe);
 
-  // Toggle iframe visibility
   let isOpen = false;
-  button.addEventListener('click', () => {
-    isOpen = !isOpen;
-    iframeContainer.style.display = isOpen ? 'block' : 'none';
-    button.style.backgroundColor = isOpen ? '#FF4444' : config.buttonColor;
-    button.innerHTML = `<span style="font-size: 24px;">${isOpen ? '✖' : config.buttonIcon}</span>`;
-  });
 
-  // Handle window resize to keep iframe responsive
-  window.addEventListener('resize', () => {
-    const maxWidth = Math.min(config.iframeWidth, window.innerWidth - 40);
-    const maxHeight = Math.min(config.iframeHeight, window.innerHeight - config.buttonSize - 50);
-    iframeContainer.style.width = `${maxWidth}px`;
-    iframeContainer.style.height = `${maxHeight}px`;
-  });
+  button.onclick = () => {
+    isOpen = !isOpen;
+    iframe.style.width = isOpen ? `${iframeWidth}px` : '0px';
+    iframe.style.height = isOpen ? `${iframeHeight}px` : '0px';
+  };
+
+  document.body.appendChild(button);
+  document.body.appendChild(iframe);
 })();
