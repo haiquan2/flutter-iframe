@@ -1,4 +1,7 @@
 {
+  "framework": null,
+  "buildCommand": "flutter build web --release",
+  "outputDirectory": "build/web",
   "headers": [
     {
       "source": "/(.*)",
@@ -12,6 +15,12 @@
           "value": "frame-ancestors *"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

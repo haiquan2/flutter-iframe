@@ -9,14 +9,13 @@ import 'pages/home/home_page.dart';
 import 'package:web/web.dart' as web;
 
 void main() {
-  final isInIframe = web.window.top != web.window.self;
-  final queryParams = Uri.base.queryParameters;
-  final isIframeParam = queryParams['iframe'] == 'true';
+  final queryParams = Uri.parse(web.window.location.href).queryParameters;
+  final isIframe = queryParams['iframe'] == 'true';
 
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: MyApp(isIframe: isInIframe || isIframeParam),
+      child: MyApp(isIframe: isIframe),
     ),
   );
 }
@@ -29,21 +28,22 @@ class MyApp extends StatelessWidget {
     initialLocation: '/',
     routes: [
       GoRoute(
-          path: '/',
-          builder: (context, state) {
-            final isIframe = web.window.top != web.window.self;
-            final params = Uri.parse(web.window.location.href).queryParameters;
-            final chatId = params['chatId'] ?? generateChatId();
-
-            return isIframe
-                ? ChatPage(chatId: chatId, isIframe: true)
-                : const HomePage();
-          }),
+        path: '/',
+        builder: (context, state) {
+          final params = Uri.parse(web.window.location.href).queryParameters;
+          final chatId = params['chatId'] ?? generateChatId();
+          final isIframe = params['iframe'] == 'true';
+          return isIframe
+              ? ChatPage(chatId: chatId, isIframe: true)
+              : const HomePage();
+        },
+      ),
       GoRoute(
         path: '/chat/:chatId',
         builder: (context, state) {
           final chatId = state.pathParameters['chatId']!;
-          final isIframe = web.window.top != web.window.self;
+          final params = Uri.parse(web.window.location.href).queryParameters;
+          final isIframe = params['iframe'] == 'true';
           return ChatPage(chatId: chatId, isIframe: isIframe);
         },
       ),
@@ -54,13 +54,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final params = Uri.parse(web.window.location.href).queryParameters;
-    final themeMode = params['theme'] == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    final themeMode =
+        params['theme'] == 'dark' ? ThemeMode.dark : ThemeMode.light;
 
     return MaterialApp.router(
       title: 'AI Chat Assistant',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.themeMode == ThemeMode.system ? themeMode : themeProvider.themeMode,
+      themeMode: themeProvider.themeMode == ThemeMode.system
+          ? themeMode
+          : themeProvider.themeMode,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );

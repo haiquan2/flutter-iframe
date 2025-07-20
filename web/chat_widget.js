@@ -1,26 +1,31 @@
 (function () {
   const scriptTag = document.currentScript;
 
-  const buttonColor = scriptTag.dataset.buttonColor || '#6366F1';
-  const iframeWidth = scriptTag.dataset.iframeWidth || '400';
-  const iframeHeight = scriptTag.dataset.iframeHeight || '600';
-  const widgetUrl = scriptTag.dataset.widgetUrl || 'https://flutter-iframe.vercel.app';
+  const config = {
+    widgetUrl: scriptTag.dataset.widgetUrl || 'https://flutter-iframe.vercel.app',
+    buttonColor: scriptTag.dataset.buttonColor || '#6366F1',
+    buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
+    iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
+    iframeHeight: parseInt(scriptTag.dataset.iframeHeight) || 600,
+    theme: scriptTag.dataset.theme || 'light',
+    buttonIcon: scriptTag.dataset.buttonIcon || '💬',
+  };
 
-  // ✅ B1. Tạo hoặc lấy chatId từ localStorage
+  // Generate or retrieve chatId
   let chatId = localStorage.getItem('chat_id');
   if (!chatId) {
     chatId = 'chat_' + Math.random().toString(36).substring(2, 10);
     localStorage.setItem('chat_id', chatId);
   }
 
-  // ✅ B2. Tạo nút chat nổi
+  // Create floating button
   const button = document.createElement('div');
   button.style.position = 'fixed';
   button.style.bottom = '24px';
   button.style.right = '24px';
-  button.style.width = '60px';
-  button.style.height = '60px';
-  button.style.backgroundColor = buttonColor;
+  button.style.width = `${config.buttonSize}px`;
+  button.style.height = `${config.buttonSize}px`;
+  button.style.backgroundColor = config.buttonColor;
   button.style.borderRadius = '50%';
   button.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
   button.style.cursor = 'pointer';
@@ -28,18 +33,13 @@
   button.style.display = 'flex';
   button.style.alignItems = 'center';
   button.style.justifyContent = 'center';
-  button.innerHTML = `
-    <svg fill="white" width="28" height="28" viewBox="0 0 24 24">
-      <path d="M2 21l1.5-5.5c-1.33-1.44-2-3.28-2-5.5
-        0-4.42 3.58-8 8-8s8 3.58 8 8-3.58 8-8 8c-2.22
-        0-4.06-.84-5.5-2L2 21z"/>
-    </svg>`;
+  button.innerHTML = `<span style="font-size: 24px; color: white;">${config.buttonIcon}</span>`;
 
-  // ✅ B3. Tạo iframe ẩn
+  // Create iframe
   const iframe = document.createElement('iframe');
-  iframe.src = `${widgetUrl}/?iframe=true&chatId=${chatId}`;
+  iframe.src = `${config.widgetUrl}/?iframe=true&chatId=${chatId}&theme=${config.theme}`;
   iframe.style.position = 'fixed';
-  iframe.style.bottom = '24px';
+  iframe.style.bottom = `${config.buttonSize + 10}px`; // Điều chỉnh để tránh chồng lấn
   iframe.style.right = '24px';
   iframe.style.width = '0px';
   iframe.style.height = '0px';
@@ -50,15 +50,15 @@
   iframe.style.backgroundColor = 'white';
   iframe.allow = 'clipboard-write';
 
-  // ✅ B4. Toggle mở/đóng iframe
+  // Toggle iframe visibility
   let isOpen = false;
   button.onclick = () => {
     isOpen = !isOpen;
-    iframe.style.width = isOpen ? `${iframeWidth}px` : '0px';
-    iframe.style.height = isOpen ? `${iframeHeight}px` : '0px';
+    iframe.style.width = isOpen ? `${config.iframeWidth}px` : '0px';
+    iframe.style.height = isOpen ? `${config.iframeHeight}px` : '0px';
   };
 
-  // ✅ B5. Gắn vào DOM
+  // Append to DOM
   document.body.appendChild(button);
   document.body.appendChild(iframe);
 })();

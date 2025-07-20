@@ -175,32 +175,37 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildCompactLayout() {
-    return Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: _messages.isEmpty
-                        ? const ChatEmptyState()
-                        : MessagesList(
-                            messages: _messages,
-                            scrollController: _scrollController,
-                          ),
-                  ),
-                  ChatInputBox(
-                    onMessageSubmit: _handleMessageSubmit,
-                    disabled: _isLoading,
-                  ),
-                ],
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Container(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 600),
+                color: Theme.of(context).colorScheme.surface, // Đảm bảo màu nền
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _messages.isEmpty
+                          ? const ChatEmptyState()
+                          : MessagesList(
+                              messages: _messages,
+                              scrollController: _scrollController,
+                            ),
+                    ),
+                    ChatInputBox(
+                      onMessageSubmit: _handleMessageSubmit,
+                      disabled: _isLoading,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

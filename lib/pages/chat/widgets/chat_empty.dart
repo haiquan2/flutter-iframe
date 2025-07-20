@@ -5,19 +5,18 @@ class ChatEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          Icon(Icons.chat_bubble_outline,
+              size: 48, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 16),
           Text(
-            'Start a conversation',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
+            'Start chatting with AI!',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
           ),
         ],
       ),
