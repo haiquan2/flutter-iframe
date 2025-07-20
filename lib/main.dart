@@ -9,16 +9,21 @@ import 'pages/home/home_page.dart';
 import 'package:web/web.dart' as web;
 
 void main() {
+  final isInIframe = web.window.top != web.window.self;
+  final queryParams = Uri.base.queryParameters;
+  final isIframeParam = queryParams['iframe'] == 'true';
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: MyApp(),
+      child: MyApp(isIframe: isInIframe || isIframeParam),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
+  final bool isIframe;
+  MyApp({super.key, required this.isIframe});
 
   final GoRouter _router = GoRouter(
     initialLocation: '/',
