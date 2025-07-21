@@ -2,7 +2,7 @@
   const scriptTag = document.currentScript;
 
   const config = {
-    widgetUrl: scriptTag.dataset.widgetUrl || 'https://flutter-iframe.vercel.app',
+    widgetUrl: scriptTag.dataset.widgetUrl || 'http://localhost:50257',
     buttonColor: scriptTag.dataset.buttonColor || '#6366F1',
     buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
     iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
@@ -39,26 +39,46 @@
   const iframe = document.createElement('iframe');
   iframe.src = `${config.widgetUrl}/?iframe=true&chatId=${chatId}&theme=${config.theme}`;
   iframe.style.position = 'fixed';
-  iframe.style.bottom = `${config.buttonSize + 10}px`; // Điều chỉnh để tránh chồng lấn
+  iframe.style.bottom = '24px';
   iframe.style.right = '24px';
   iframe.style.width = '0px';
   iframe.style.height = '0px';
   iframe.style.border = 'none';
+  iframe.style.boxShadow = '2px 4px 12px rgba(0,0,0,0.2)';
   iframe.style.borderRadius = '12px';
   iframe.style.zIndex = '9998';
   iframe.style.transition = 'all 0.3s ease';
   iframe.style.backgroundColor = 'white';
   iframe.allow = 'clipboard-write';
 
+  function adjustIframeSize() {
+    const maxWidth = window.innerWidth > 500 ? config.iframeWidth : window.innerWidth - 48;
+    const maxHeight = window.innerHeight > 700 ? config.iframeHeight : window.innerHeight - 100;
+    if (isOpen) {
+      iframe.style.width = `${Math.min(maxWidth, config.iframeWidth)}px`;
+      iframe.style.height = `${Math.min(maxHeight, config.iframeHeight)}px`;
+    }
+  }
+
   // Toggle iframe visibility
   let isOpen = false;
   button.onclick = () => {
     isOpen = !isOpen;
-    iframe.style.width = isOpen ? `${config.iframeWidth}px` : '0px';
-    iframe.style.height = isOpen ? `${config.iframeHeight}px` : '0px';
+    if (isOpen) {
+      adjustIframeSize();
+      iframe.style.bottom = `${config.buttonSize + 28}px`;
+    } else {
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.bottom = '24px';
+    }
+    // iframe.style.width = isOpen ? `${config.iframeWidth}px` : '0px';
+    // iframe.style.height = isOpen ? `${config.iframeHeight}px` : '0px';
   };
 
+  window.addEventListener('resize', adjustIframeSize);
   // Append to DOM
   document.body.appendChild(button);
   document.body.appendChild(iframe);
+  adjustIframeSize();
 })();
