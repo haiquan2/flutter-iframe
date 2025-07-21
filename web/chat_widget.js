@@ -72,8 +72,6 @@
       iframe.style.height = '0px';
       iframe.style.bottom = '24px';
     }
-    // iframe.style.width = isOpen ? `${config.iframeWidth}px` : '0px';
-    // iframe.style.height = isOpen ? `${config.iframeHeight}px` : '0px';
   };
 
   window.addEventListener('resize', adjustIframeSize);
