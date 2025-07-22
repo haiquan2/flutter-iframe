@@ -108,7 +108,6 @@ class ChatService {
     for (var word in words) {
       currentChunk += '$word ';
 
-      // Create chunks of reasonable size (about 5-8 words)
       if (currentChunk.split(' ').length >= 6 ||
           word.endsWith('.') ||
           word.endsWith('!') ||
