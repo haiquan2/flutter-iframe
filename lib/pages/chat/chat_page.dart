@@ -1,15 +1,12 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_openai_stream/core/utils/scroll.dart';
 import 'package:flutter_openai_stream/pages/chat/widgets/chat_empty.dart';
 import 'package:flutter_openai_stream/pages/chat/widgets/chat_header.dart';
 import 'package:flutter_openai_stream/pages/chat/widgets/chat_input.dart';
 import 'package:flutter_openai_stream/pages/chat/widgets/messages_list.dart';
 import 'package:go_router/go_router.dart';
-import '../../services/chat_service.dart';
-import '../../models/message.dart';
 import 'package:web/web.dart' as web;
+import 'controllers/chat_controller.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -22,84 +19,54 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final List<Message> _messages = [];
-  final ScrollController _scrollController = ScrollController();
-  bool _isLoading = false;
+  late final ChatController _chatController;
 
   @override
   void initState() {
     super.initState();
+    _chatController = ChatController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final extra = GoRouterState.of(context).extra;
-      if (extra is String && extra.isNotEmpty) {
-        _handleMessageSubmit(extra);
-      }
+      _handleInitialMessage();
     });
+  }
+
+  void _handleInitialMessage() {
+    final extra = GoRouterState.of(context).extra;
+    if (extra != null) {
+      if (extra is String && extra.isNotEmpty) {
+        _chatController.sendMessage(extra);
+      } else if (extra is Map<String, dynamic>) {
+        final text = extra['text'] as String? ?? '';
+        final imageBytes = extra['imageBytes'] as Uint8List?;
+        if (text.isNotEmpty || imageBytes != null) {
+          _chatController.sendMessage(text, imageBytes: imageBytes);
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _chatController.dispose();
     super.dispose();
   }
 
-  void _handleMessageSubmit(String message) async {
-    if (message.trim().isEmpty) return;
+  void _handleMessageSubmit(String message, {Uint8List? imageBytes}) {
+    _chatController.sendMessage(message, imageBytes: imageBytes);
+  }
 
-    setState(() {
-      _messages.add(Message(
-        content: message,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
-      _messages.add(Message(
-        content: '',
-        isUser: false,
-        timestamp: DateTime.now(),
-        isLoading: true,
-      ));
-      _isLoading = true;
-    });
-
-    scrollToBottom(_scrollController);
-
-    try {
-      String response = '';
-      await for (String chunk in ChatService.getChatResponse(message)) {
-        setState(() {
-          response += chunk;
-          _messages[_messages.length - 1] = Message(
-            content: response.trim(),
-            isUser: false,
-            timestamp: DateTime.now(),
-            isLoading: false,
-          );
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _messages[_messages.length - 1] = Message(
-          content: 'Sorry, I encountered an error. Please try again.',
-          isUser: false,
-          timestamp: DateTime.now(),
-          isLoading: false,
-        );
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  void _handleStop() {
+    _chatController.stopResponse();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: widget.isIframe
-          ? _buildCompactLayout() // Iframe mode: no sidebar
+          ? _buildCompactLayout()
           : Row(
               children: [
-                // Sidebar for web/mobile (non-iframe)
+                // Sidebar for non-iframe mode
                 Container(
                   width: 250,
                   color: Theme.of(context).colorScheme.surface,
@@ -154,16 +121,31 @@ class _ChatPageState extends State<ChatPage> {
               child: Column(
                 children: [
                   Expanded(
-                    child: _messages.isEmpty
-                        ? const ChatEmptyState()
-                        : MessagesList(
-                            messages: _messages,
-                            scrollController: _scrollController,
-                          ),
+                    child: AnimatedBuilder(
+                      animation: _chatController,
+                      builder: (context, child) {
+                        return _chatController.messages.isEmpty
+                            ? const ChatEmptyState()
+                            : MessagesList(
+                                messages: _chatController.messages,
+                                scrollController: _chatController.scrollController,
+                              );
+                      },
+                    ),
                   ),
-                  ChatInputBox(
-                    onMessageSubmit: _handleMessageSubmit,
-                    disabled: _isLoading,
+                  AnimatedBuilder(
+                    animation: _chatController,
+                    builder: (context, child) {
+                      return ChatInput(
+                        onSubmit: _handleMessageSubmit,
+                        onStop: _handleStop,
+                        placeholder: 'Type a message...',
+                        disabled: _chatController.isLoading,
+                        isLoading: _chatController.isLoading,
+                        mode: ChatInputMode.chat,
+                        style: ChatInputStyle.modern,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -184,20 +166,36 @@ class _ChatPageState extends State<ChatPage> {
               child: Container(
                 constraints:
                     const BoxConstraints(maxWidth: 400, maxHeight: 600),
-                color: Theme.of(context).colorScheme.surface, // Đảm bảo màu nền
+                color: Theme.of(context).colorScheme.surface,
                 child: Column(
                   children: [
                     Expanded(
-                      child: _messages.isEmpty
-                          ? const ChatEmptyState()
-                          : MessagesList(
-                              messages: _messages,
-                              scrollController: _scrollController,
-                            ),
+                      child: AnimatedBuilder(
+                        animation: _chatController,
+                        builder: (context, child) {
+                          return _chatController.messages.isEmpty
+                              ? const ChatEmptyState()
+                              : MessagesList(
+                                  messages: _chatController.messages,
+                                  scrollController:
+                                      _chatController.scrollController,
+                                );
+                        },
+                      ),
                     ),
-                    ChatInputBox(
-                      onMessageSubmit: _handleMessageSubmit,
-                      disabled: _isLoading,
+                    AnimatedBuilder(
+                      animation: _chatController,
+                      builder: (context, child) {
+                        return ChatInput(
+                          onSubmit: _handleMessageSubmit,
+                          onStop: _handleStop,
+                          placeholder: 'Type a message...',
+                          disabled: _chatController.isLoading,
+                          isLoading: _chatController.isLoading,
+                          mode: ChatInputMode.chat,
+                          style: ChatInputStyle.modern,
+                        );
+                      },
                     ),
                   ],
                 ),
