@@ -60,7 +60,6 @@
     }
   }
 
-  // Toggle iframe visibility
   let isOpen = false;
   button.onclick = () => {
     isOpen = !isOpen;
