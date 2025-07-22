@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_openai_stream/core/utils/text_formatter.dart';
 import 'package:flutter_openai_stream/models/message.dart';
 import 'package:flutter_openai_stream/widgets/messages/loading_indicator.dart';
+import 'dart:html' as html;
 
 class MessageContent extends StatelessWidget {
   final Message message;
@@ -38,11 +39,13 @@ class MessageContent extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (message.imageBytes != null)
+                // Show Image preview first if available
+                if (message.imageBytes != null) 
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: _buildImagePreviewList(context, isDark),
                   ),
+                // Show user request below images
                 if (message.content.isNotEmpty)
                   formattedMessage(context, isDark, message),
               ],
@@ -68,7 +71,7 @@ class MessageContent extends StatelessWidget {
 
   Widget _buildImageThumbnail(BuildContext context, bool isDark) {
     return GestureDetector(
-      onTap: () => _showImageDialog(context),
+      onTap: () => _showImageInParent(),
       child: Container(
         width: 80,
         height: 80,
@@ -144,84 +147,13 @@ class MessageContent extends StatelessWidget {
     );
   }
 
-  void _showImageDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.8),
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.zero, // Remove default padding
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.9,
-              maxHeight: MediaQuery.of(context).size.height * 0.9,
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: InteractiveViewer(
-                    boundaryMargin: const EdgeInsets.all(20.0),
-                    minScale: 0.1,
-                    maxScale: 5.0,
-                    child: Image.memory(
-                      message.imageBytes!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 60,
-                                color: Colors.white70,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Failed to load image',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  void _showImageInParent() {
+    // Convert image bytes to base64
+    final base64Image = html.window.btoa(String.fromCharCodes(message.imageBytes!));
+    // Post message to parent window
+    html.window.parent?.postMessage({
+      'type': 'showImage',
+      'imageSrc': 'data:image/jpeg;base64,$base64Image',
+    }, '*');
   }
 }
