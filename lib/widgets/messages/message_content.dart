@@ -38,13 +38,11 @@ class MessageContent extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Show Image preview first if available
-                if (message.imageBytes != null) 
+                if (message.imageBytes != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: _buildImagePreviewList(context, isDark),
                   ),
-                // Show user request below images
                 if (message.content.isNotEmpty)
                   formattedMessage(context, isDark, message),
               ],
@@ -53,16 +51,14 @@ class MessageContent extends StatelessWidget {
   }
 
   Widget _buildImagePreviewList(BuildContext context, bool isDark) {
-    // Nếu message có nhiều ảnh, có thể extend logic này
-    // Hiện tại giả sử chỉ có 1 ảnh trong imageBytes
     return Container(
       height: 80,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 1, // Có thể thay đổi nếu có nhiều ảnh
+        itemCount: 1,
         itemBuilder: (context, index) {
           return Padding(
-            padding: EdgeInsets.only(right: index < 0 ? 8.0 : 0), // 0 vì chỉ có 1 ảnh
+            padding: EdgeInsets.only(right: index < 0 ? 8.0 : 0),
             child: _buildImageThumbnail(context, isDark),
           );
         },
@@ -125,7 +121,6 @@ class MessageContent extends StatelessWidget {
                   );
                 },
               ),
-              // Overlay với icon để chỉ ra có thể click
               Positioned(
                 top: 4,
                 right: 4,
@@ -153,21 +148,23 @@ class MessageContent extends StatelessWidget {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.8),
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          child: Stack(
-            children: [
-              // Main image
-              Center(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.9,
-                    maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+          insetPadding: EdgeInsets.zero, // Remove default padding
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    boundaryMargin: const EdgeInsets.all(20.0),
+                    minScale: 0.1,
+                    maxScale: 5.0,
                     child: Image.memory(
                       message.imageBytes!,
                       fit: BoxFit.contain,
@@ -201,28 +198,27 @@ class MessageContent extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              // Close button
-              Positioned(
-                top: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24,
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

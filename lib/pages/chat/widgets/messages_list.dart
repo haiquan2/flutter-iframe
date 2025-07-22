@@ -14,13 +14,24 @@ class MessagesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-        return MessageBubble(message: messages[index]);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (scrollNotification) {
+        if (scrollNotification is ScrollStartNotification ||
+            scrollNotification is ScrollUpdateNotification) {
+          // Ngăn chặn sự kiện cuộn lan ra ngoài iframe
+          return true;
+        }
+        return false;
       },
+      child: ListView.builder(
+        controller: scrollController,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          return MessageBubble(message: messages[index]);
+        },
+        physics: const ClampingScrollPhysics(), // Giới hạn cuộn trong vùng chat
+      ),
     );
   }
 }
