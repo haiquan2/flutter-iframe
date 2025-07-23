@@ -2,7 +2,7 @@
   const scriptTag = document.currentScript;
 
   const config = {
-    widgetUrl: scriptTag.dataset.widgetUrl || 'http://localhost:50257',
+    widgetUrl: scriptTag.dataset.widgetUrl || 'http://localhost:5000',
     buttonColor: scriptTag.dataset.buttonColor || '#6366F1',
     buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
     iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
@@ -33,40 +33,125 @@
   button.style.justifyContent = 'center';
   button.innerHTML = `<span style="font-size: 24px; color: white;">${config.buttonIcon}</span>`;
 
+  // Create iframe container to better control events
+  const iframeContainer = document.createElement('div');
+  iframeContainer.style.position = 'fixed';
+  iframeContainer.style.bottom = '24px';
+  iframeContainer.style.right = '24px';
+  iframeContainer.style.width = '0px';
+  iframeContainer.style.height = '0px';
+  iframeContainer.style.zIndex = '9998';
+  iframeContainer.style.transition = 'all 0.3s ease';
+  iframeContainer.style.overflow = 'hidden';
+  iframeContainer.style.borderRadius = '12px';
+  iframeContainer.style.boxShadow = '2px 4px 12px rgba(0,0,0,0.2)';
+
   const iframe = document.createElement('iframe');
   iframe.src = `${config.widgetUrl}/?iframe=true&chatId=${chatId}&theme=${config.theme}&v=${Date.now()}`;
-  iframe.style.position = 'fixed';
-  iframe.style.bottom = '24px';
-  iframe.style.right = '24px';
-  iframe.style.width = '0px';
-  iframe.style.height = '0px';
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
   iframe.style.border = 'none';
-  iframe.style.boxShadow = '2px 4px 12px rgba(0,0,0,0.2)';
   iframe.style.borderRadius = '12px';
-  iframe.style.zIndex = '9998';
-  iframe.style.transition = 'all 0.3s ease';
   iframe.style.backgroundColor = 'white';
   iframe.allow = 'clipboard-write; camera; microphone';
+
+  iframeContainer.appendChild(iframe);
+
+  let isOpen = false;
+  let isMouseOverIframe = false;
+  let originalOverflow = null;
+
+  // Track mouse position relative to iframe
+  function updateMousePosition(event) {
+    if (!isOpen) return;
+    
+    const rect = iframeContainer.getBoundingClientRect();
+    const isInside = (
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom
+    );
+    
+    if (isInside !== isMouseOverIframe) {
+      isMouseOverIframe = isInside;
+      toggleBodyScroll();
+    }
+  }
+
+  function toggleBodyScroll() {
+    if (isMouseOverIframe && isOpen) {
+      // Disable parent page scrolling
+      if (originalOverflow === null) {
+        originalOverflow = document.body.style.overflow;
+      }
+      document.body.style.overflow = 'hidden';
+      
+      // Send message to iframe to enable scrolling
+      iframe.contentWindow?.postMessage({
+        type: 'enable_scroll',
+        enabled: true
+      }, config.widgetUrl);
+    } else {
+      // Re-enable parent page scrolling
+      if (originalOverflow !== null) {
+        document.body.style.overflow = originalOverflow;
+      }
+      
+      // Send message to iframe to handle scroll appropriately
+      iframe.contentWindow?.postMessage({
+        type: 'enable_scroll',
+        enabled: false
+      }, config.widgetUrl);
+    }
+  }
+
+  // Enhanced wheel event handling
+  function handleWheelEvent(event) {
+    if (!isOpen || !isMouseOverIframe) return;
+    
+    // Prevent parent page from scrolling when mouse is over iframe
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Forward the wheel event to iframe
+    iframe.contentWindow?.postMessage({
+      type: 'wheel_event',
+      deltaX: event.deltaX,
+      deltaY: event.deltaY,
+      deltaZ: event.deltaZ
+    }, config.widgetUrl);
+  }
 
   function adjustIframeSize() {
     const maxWidth = window.innerWidth > 500 ? config.iframeWidth : window.innerWidth - 48;
     const maxHeight = window.innerHeight > 700 ? config.iframeHeight : window.innerHeight - 100;
+    
     if (isOpen) {
-      iframe.style.width = `${Math.min(maxWidth, config.iframeWidth)}px`;
-      iframe.style.height = `${Math.min(maxHeight, config.iframeHeight)}px`;
+      iframeContainer.style.width = `${Math.min(maxWidth, config.iframeWidth)}px`;
+      iframeContainer.style.height = `${Math.min(maxHeight, config.iframeHeight)}px`;
+      iframeContainer.style.bottom = `${config.buttonSize + 28}px`;
+    } else {
+      iframeContainer.style.width = '0px';
+      iframeContainer.style.height = '0px';
+      iframeContainer.style.bottom = '24px';
+      
+      // Reset scroll state when closing
+      if (originalOverflow !== null) {
+        document.body.style.overflow = originalOverflow;
+        originalOverflow = null;
+      }
+      isMouseOverIframe = false;
     }
   }
 
-  let isOpen = false;
   button.onclick = () => {
     isOpen = !isOpen;
-    if (isOpen) {
-      adjustIframeSize();
-      iframe.style.bottom = `${config.buttonSize + 28}px`;
-    } else {
-      iframe.style.width = '0px';
-      iframe.style.height = '0px';
-      iframe.style.bottom = '24px';
+    adjustIframeSize();
+    
+    if (!isOpen) {
+      // Reset all scroll states when closing
+      toggleBodyScroll();
     }
   };
 
@@ -115,17 +200,40 @@
   modal.appendChild(modalContent);
   document.body.appendChild(modal);
 
-  // Listen for messages from iframe to show image
+  // Event listeners
+  document.addEventListener('mousemove', updateMousePosition, { passive: true });
+  document.addEventListener('wheel', handleWheelEvent, { passive: false });
+
+  // Listen for messages from iframe
   window.addEventListener('message', (event) => {
     if (event.origin !== config.widgetUrl) return;
+    
     if (event.data.type === 'showImage') {
       modalImage.src = event.data.imageSrc;
       modal.style.display = 'flex';
     }
+    
+    if (event.data.type === 'iframe_ready') {
+      console.log('Iframe ready:', event.data.chatId);
+    }
+    
+    if (event.data.type === 'scroll_request') {
+      // Handle scroll requests from iframe
+      window.scrollBy(event.data.deltaX || 0, event.data.deltaY || 0);
+    }
   });
 
+  // Handle window events
   window.addEventListener('resize', adjustIframeSize);
+  
+  // Clean up when page unloads
+  window.addEventListener('beforeunload', () => {
+    if (originalOverflow !== null) {
+      document.body.style.overflow = originalOverflow;
+    }
+  });
+
   document.body.appendChild(button);
-  document.body.appendChild(iframe);
+  document.body.appendChild(iframeContainer);
   adjustIframeSize();
 })();
