@@ -1,5 +1,3 @@
-import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_openai_stream/pages/chat/widgets/chat_empty.dart';
@@ -22,181 +20,14 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   late final ChatController _chatController;
-  bool _scrollEnabled = true;
-  web.EventListener? _wheelListener;
-  web.EventListener? _touchListener;
-  web.EventListener? _scrollListener;
-  web.EventListener? _messageListener;
 
   @override
   void initState() {
     super.initState();
     _chatController = ChatController();
-    
-    if (widget.isIframe) {
-      _setupIframeScrollHandling();
-    }
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleInitialMessage();
     });
-  }
-
-  void _setupIframeScrollHandling() {
-    // Set up message listener for parent communication
-    _messageListener = (web.Event event) {
-      final messageEvent = event as web.MessageEvent;
-      final data = messageEvent.data;
-      
-      if (data != null) {
-        try {
-          final message = data as JSObject;
-          final type = message.getProperty('type'.toJS) as JSString?;
-          
-          if (type?.toDart == 'enable_scroll') {
-            final enabled = message.getProperty('enabled'.toJS) as JSBoolean?;
-            _scrollEnabled = enabled?.toDart ?? true;
-            _updateScrollBehavior();
-          } else if (type?.toDart == 'wheel_event') {
-            final deltaY = message.getProperty('deltaY'.toJS) as JSNumber?;
-            if (deltaY != null && _scrollEnabled) {
-              _handleWheelEvent(deltaY.toDartDouble);
-            }
-          }
-        } catch (e) {
-          print('Error handling message: $e');
-        }
-      }
-    } as web.EventListener?;
-    
-    web.window.addEventListener('message', _messageListener!);
-    
-    // Initial setup
-    _updateScrollBehavior();
-    _setupEventListeners();
-    
-    // Notify parent that iframe is ready
-    _notifyParentReady();
-  }
-
-  void _setupEventListeners() {
-    // Handle wheel events
-    _wheelListener = (web.Event event) {
-      if (!_scrollEnabled) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    } as web.EventListener?;
-
-    // Handle touch events
-    _touchListener = (web.Event event) {
-      if (!_scrollEnabled) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    } as web.EventListener?;
-
-    // Handle scroll events
-    _scrollListener = (web.Event event) {
-      if (!_scrollEnabled) {
-        event.stopPropagation();
-      }
-    } as web.EventListener?;
-
-    web.document.addEventListener('wheel', _wheelListener!, {
-      'passive': false,
-      'capture': true,
-    } as JSAny);
-
-    web.document.addEventListener('touchmove', _touchListener!, {
-      'passive': false,
-      'capture': true,
-    } as JSAny);
-
-    web.document.addEventListener('scroll', _scrollListener!, {
-      'capture': true,
-    } as JSAny);
-  }
-
-  void _updateScrollBehavior() {
-    final style = web.document.getElementById('iframe-scroll-style') as web.HTMLStyleElement?;
-    
-    if (style != null) {
-      style.remove();
-    }
-
-    final newStyle = web.document.createElement('style') as web.HTMLStyleElement;
-    newStyle.id = 'iframe-scroll-style';
-    
-    if (_scrollEnabled) {
-      newStyle.textContent = '''
-        body {
-          overflow: auto !important;
-          position: relative !important;
-          width: 100% !important;
-          height: 100vh !important;
-        }
-        html {
-          overflow: auto !important;
-          height: 100% !important;
-        }
-        * {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(0,0,0,0.3) transparent;
-        }
-        *::-webkit-scrollbar {
-          width: 6px;
-        }
-        *::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        *::-webkit-scrollbar-thumb {
-          background-color: rgba(0,0,0,0.3);
-          border-radius: 3px;
-        }
-        *::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(0,0,0,0.5);
-        }
-      ''';
-    } else {
-      newStyle.textContent = '''
-        body {
-          overflow: hidden !important;
-          position: fixed !important;
-          width: 100% !important;
-          height: 100vh !important;
-        }
-        html {
-          overflow: hidden !important;
-        }
-      ''';
-    }
-    
-    web.document.head!.appendChild(newStyle);
-  }
-
-  void _handleWheelEvent(double deltaY) {
-    // Handle the wheel event within the Flutter app
-    // This can be used to manually scroll specific widgets if needed
-    if (_chatController.scrollController.hasClients) {
-      final currentPosition = _chatController.scrollController.position.pixels;
-      final maxScroll = _chatController.scrollController.position.maxScrollExtent;
-      final minScroll = _chatController.scrollController.position.minScrollExtent;
-      
-      double newPosition = currentPosition + deltaY;
-      newPosition = newPosition.clamp(minScroll, maxScroll);
-      
-      _chatController.scrollController.jumpTo(newPosition);
-    }
-  }
-
-  void _notifyParentReady() {
-    if (web.window.parent != web.window) {
-      web.window.parent?.postMessage({
-        'type': 'iframe_ready',
-        'chatId': widget.chatId,
-      } as JSAny?, '*' as JSAny);
-    }
   }
 
   void _handleInitialMessage() {
@@ -216,24 +47,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    // Clean up event listeners
-    if (_wheelListener != null) {
-      web.document.removeEventListener('wheel', _wheelListener!);
-    }
-    if (_touchListener != null) {
-      web.document.removeEventListener('touchmove', _touchListener!);
-    }
-    if (_scrollListener != null) {
-      web.document.removeEventListener('scroll', _scrollListener!);
-    }
-    if (_messageListener != null) {
-      web.window.removeEventListener('message', _messageListener!);
-    }
-    
-    // Remove style element
-    final style = web.document.getElementById('iframe-scroll-style');
-    style?.remove();
-    
     _chatController.dispose();
     super.dispose();
   }
