@@ -27,7 +27,7 @@ Widget actionButton({
 
 void copyToClipboardAndShowSnackBar(BuildContext context, Message text) {
   // Function to copy text to clipboard
-  Clipboard.setData(ClipboardData(text: text.content));
+  Clipboard.setData(ClipboardData(text: text.text));
   
   // Show a snackbar to confirm the action
   ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +90,7 @@ void feedbackResponse(bool isPositive, Message message) {
 
   // can send this to your analytics or feedback system
   print(
-      'Feedback: ${isPositive ? 'Positive' : 'Negative'} for message: ${message.content.substring(0, 50)}...');
+      'Feedback: ${isPositive ? 'Positive' : 'Negative'} for message: ${message.text.substring(0, 50)}...');
 }
 
 

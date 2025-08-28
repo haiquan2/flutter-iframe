@@ -1,503 +1,308 @@
-// widgets/common/unified_chat_input.dart
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_openai_stream/core/constants/app_sizes.dart';
-import 'package:flutter_openai_stream/core/utils/helper.dart';
-import 'package:flutter_openai_stream/pages/chat/handler/image_handler.dart';
-import 'package:flutter_openai_stream/pages/chat/widgets/image_preview.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import '../../../services/chat_service.dart';
 
-/// Unified chat input widget that can be used in both HomePage and ChatPage
-/// with different behaviors based on the mode
-class ChatInput extends StatefulWidget {
-  // Core functionality
-  final Function(String text, {Uint8List? imageBytes}) onSubmit;
-  final Function()? onStop;
-  
-  // UI Configuration
-  final String placeholder;
-  final bool disabled;
-  final bool isLoading;
-  final double? maxHeight;
-  
-  // Mode-specific behavior
-  final ChatInputMode mode;
-  
-  // Style variants
-  final ChatInputStyle style;
+// enum ChatInputMode { chat }
+// enum ChatInputStyle { modern }
 
-  const ChatInput({
-    super.key,
-    required this.onSubmit,
-    this.onStop,
-    this.placeholder = 'Type your message here...',
-    this.disabled = false,
-    this.isLoading = false,
-    this.maxHeight,
-    this.mode = ChatInputMode.homepage,
-    this.style = ChatInputStyle.modern,
-  });
+// class ChatInput extends StatefulWidget {
+//   final Function(String message, {List<WebFile>? files}) onSubmit;
+//   final Function()? onStop;
+//   final String placeholder;
+//   final bool disabled;
+//   final bool isLoading;
+//   final ChatInputMode mode;
+//   final ChatInputStyle style;
 
-  @override
-  State<ChatInput> createState() => _ChatInputState();
-}
+//   const ChatInput({
+//     super.key,
+//     required this.onSubmit,
+//     this.onStop,
+//     this.placeholder = 'Type a message...',
+//     this.disabled = false,
+//     this.isLoading = false,
+//     this.mode = ChatInputMode.chat,
+//     this.style = ChatInputStyle.modern,
+//   });
 
-class _ChatInputState extends State<ChatInput> {
-  final TextEditingController _textController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  final ImageHandler _imageHandler = ImageHandler();
+//   @override
+//   State<ChatInput> createState() => _ChatInputState();
+// }
 
-  Uint8List? _selectedImage;
-  bool _isComposing = false;
+// class _ChatInputState extends State<ChatInput> {
+//   final TextEditingController _textController = TextEditingController();
+//   final FocusNode _focusNode = FocusNode();
+//   List<WebFile> _selectedFiles = [];
+//   bool _isPickingFiles = false;
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
+//   @override
+//   void dispose() {
+//     _textController.dispose();
+//     _focusNode.dispose();
+//     super.dispose();
+//   }
 
-  void _handleSubmit() {
-    final text = _textController.text.trim();
-    if (text.isEmpty && _selectedImage == null) return;
-    if (widget.disabled || widget.isLoading) return;
+//   Future<void> _pickFiles() async {
+//     if (_isPickingFiles) return;
 
-    widget.onSubmit(text, imageBytes: _selectedImage);
-    _textController.clear();
-    _clearImage();
-    setState(() {
-      _isComposing = false;
-    });
-    
-    // Unfocus for homepage mode to prevent keyboard staying open
-    if (widget.mode == ChatInputMode.homepage) {
-      _focusNode.unfocus();
-    }
-  }
+//     setState(() => _isPickingFiles = true);
 
-  void _handleStop() {
-    if (widget.onStop != null) {
-      widget.onStop!();
-    }
-  }
+//     try {
+//       print('Starting file selection...');
 
-  Future<void> _handleImagePick() async {
-    try {
-      final imageBytes = await _imageHandler.pickImage();
-      if (imageBytes != null) {
-        setState(() {
-          _selectedImage = imageBytes;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        showToast(
-          context: context,
-          message: 'Failed to pick image',
-          icon: Icons.error,
-          iconColor: Colors.red,
-        );
-      }
-    }
-  }
+//       final selectedFiles = await ChatService.pickFiles();
 
-  void _clearImage() {
-    setState(() {
-      _selectedImage = null;
-    });
-  }
+//       if (selectedFiles != null && selectedFiles.isNotEmpty) {
+//         setState(() {
+//           _selectedFiles.addAll(selectedFiles);
+//         });
 
-  @override
-  Widget build(BuildContext context) {
-    return widget.style == ChatInputStyle.classic
-        ? _buildClassicStyle()
-        : _buildModernStyle();
-  }
+//         print('Successfully selected ${selectedFiles.length} files:');
+//         for (var file in selectedFiles) {
+//           print('  - ${file.name} (${file.size} bytes)');
+//         }
 
-  Widget _buildClassicStyle() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+//         if (mounted) {
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             SnackBar(
+//               content: Text('Đã chọn ${selectedFiles.length} file'),
+//               backgroundColor: Colors.green,
+//               duration: const Duration(seconds: 2),
+//             ),
+//           );
+//         }
+//       } else {
+//         print('No files selected');
+//         if (mounted) {
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             const SnackBar(
+//               content: Text('Không có file nào được chọn'),
+//               backgroundColor: Colors.orange,
+//               duration: Duration(seconds: 2),
+//             ),
+//           );
+//         }
+//       }
+//     } catch (e) {
+//       print('Error in file selection: $e');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF334155) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF475569) : const Color(0xFFE2E8F0),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Input area with keyboard listener
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: _selectedImage != null ? 80.0 : 56.0,
-              maxHeight: widget.maxHeight ?? AppSizes.kChatBoxMaxHeight,
-            ),
-            child: RawKeyboardListener(
-              focusNode: FocusNode(),
-              onKey: (RawKeyEvent event) {
-                if (event is RawKeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.enter &&
-                    !event.isShiftPressed) {
-                  _handleSubmit();
-                }
-              },
-              child: _buildTextInputArea(),
-            ),
-          ),
+//       if (mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Lỗi khi chọn file: ${e.toString()}'),
+//             backgroundColor: Colors.red,
+//             duration: const Duration(seconds: 3),
+//           ),
+//         );
+//       }
+//     } finally {
+//       setState(() => _isPickingFiles = false);
+//     }
+//   }
 
-          // Action buttons
-          _buildActionRow(),
-        ],
-      ),
-    );
-  }
+//   void _removeFile(int index) {
+//     setState(() {
+//       _selectedFiles.removeAt(index);
+//     });
+//   }
 
-  Widget _buildModernStyle() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+//   void _submitMessage() {
+//     final message = _textController.text.trim();
+//     if (message.isEmpty && _selectedFiles.isEmpty) return;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        widget.mode == ChatInputMode.chat ? 8 : 0,
-        16,
-        widget.mode == ChatInputMode.chat ? 16 : 0,
-      ),
-      decoration: BoxDecoration(
-        color: widget.mode == ChatInputMode.chat 
-            ? theme.scaffoldBackgroundColor 
-            : Colors.transparent,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Main input container
-          _buildModernInputContainer(theme, isDark),
-          
-          // Helper text for chat mode
-          if (widget.mode == ChatInputMode.chat && !widget.isLoading)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                KeyboardShortcutHelper.getShortcutText(),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+//     print(
+//         'ChatInput: Submitting message text="$message", files=${_selectedFiles.map((f) => f.name).toList()}');
 
-  Widget _buildModernInputContainer(ThemeData theme, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade900 : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _focusNode.hasFocus
-              ? theme.primaryColor.withOpacity(0.5)
-              : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Text input area (Row 1)
-          _buildTextInputArea(),
+//     widget.onSubmit(
+//       message.isEmpty ? 'Phân tích file này' : message,
+//       files: _selectedFiles.isEmpty ? null : _selectedFiles,
+//     );
 
-          // Controls area (Row 2)
-          _buildControlsArea(),
-        ],
-      ),
-    );
-  }
+//     _textController.clear();
+//     setState(() {
+//       _selectedFiles.clear();
+//     });
+//   }
 
-  Widget _buildTextInputArea() {
-    final hasImage = _selectedImage != null;
-    final isModern = widget.style == ChatInputStyle.modern;
+//   void _handleKeyPress(RawKeyEvent event) {
+//     if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+//         !event.isShiftPressed &&
+//         !widget.disabled &&
+//         !widget.isLoading) {
+//       _submitMessage();
+//     }
+//   }
 
-    return Container(
-      constraints: BoxConstraints(
-        minHeight: hasImage ? 80 : (isModern ? 48 : 56),
-        maxHeight: widget.maxHeight ?? (isModern ? 200 : AppSizes.kChatBoxMaxHeight),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        hasImage ? 8 : 16,
-        isModern ? 12 : 16,
-        16,
-        isModern ? 8 : (hasImage ? 8 : 16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image preview (for modern style or when image is present)
-          if (hasImage && isModern)
-            ImagePreview(
-              imageBytes: _selectedImage!,
-              onClear: _clearImage,
-            ),
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final colorScheme = theme.colorScheme;
 
-          // Text input
-          Expanded(
-            child: RawKeyboardListener(
-              focusNode: FocusNode(),
-              onKey: (RawKeyEvent event) {
-                if (event is RawKeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.enter &&
-                    !event.isShiftPressed) {
-                  _handleSubmit();
-                }
-              },
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                enabled: !widget.disabled && !widget.isLoading,
-                maxLines: null,
-                minLines: isModern ? null : 1,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                decoration: InputDecoration(
-                  hintText: widget.placeholder,
-                  border: InputBorder.none,
-                  contentPadding: isModern 
-                      ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
-                      : EdgeInsets.zero,
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.grey[400] 
-                        : Colors.grey[500],
-                    fontSize: 16,
-                  ),
-                ),
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.white 
-                      : Colors.black87,
-                  fontSize: 16,
-                  height: 1.4,
-                ),
-                onChanged: (text) {
-                  setState(() {
-                    _isComposing = text.trim().isNotEmpty;
-                  });
-                },
-                onSubmitted: (_) {
-                  if (!widget.disabled && !widget.isLoading) {
-                    _handleSubmit();
-                  }
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: colorScheme.surface,
+//         border: Border(
+//           top: BorderSide(
+//             color: colorScheme.outline.withOpacity(0.2),
+//             width: 1,
+//           ),
+//         ),
+//       ),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           // File preview area
+//           if (_selectedFiles.isNotEmpty)
+//             Container(
+//               margin: const EdgeInsets.only(bottom: 12),
+//               child: Wrap(
+//                 spacing: 8,
+//                 runSpacing: 8,
+//                 children: _selectedFiles.asMap().entries.map((entry) {
+//                   final index = entry.key;
+//                   final file = entry.value;
+//                   return Chip(
+//                     label: Text(
+//                       '${file.name} (${ChatService.formatFileSize(file.size)})',
+//                       style: TextStyle(
+//                         color: colorScheme.onSecondaryContainer,
+//                         fontSize: 12,
+//                       ),
+//                     ),
+//                     backgroundColor: colorScheme.secondaryContainer,
+//                     deleteIcon: Icon(
+//                       Icons.close,
+//                       size: 16,
+//                       color: colorScheme.onSecondaryContainer,
+//                     ),
+//                     onDeleted: () => _removeFile(index),
+//                   );
+//                 }).toList(),
+//               ),
+//             ),
 
-  Widget _buildActionRow() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+//           // Input area
+//           Row(
+//             children: [
+//               // File picker button
+//               IconButton(
+//                 onPressed:
+//                     widget.disabled || widget.isLoading || _isPickingFiles
+//                         ? null
+//                         : _pickFiles,
+//                 icon: _isPickingFiles
+//                     ? SizedBox(
+//                         width: 16,
+//                         height: 16,
+//                         child: CircularProgressIndicator(
+//                           strokeWidth: 2,
+//                           color: colorScheme.primary,
+//                         ),
+//                       )
+//                     : Icon(
+//                         Icons.attach_file,
+//                         color: widget.disabled || widget.isLoading
+//                             ? colorScheme.onSurface.withOpacity(0.4)
+//                             : colorScheme.primary,
+//                       ),
+//                 tooltip:
+//                     _isPickingFiles ? 'Đang chọn file...' : 'Đính kèm file',
+//               ),
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Attachment button
-          IconButton(
-            onPressed: (widget.disabled || widget.isLoading) ? null : _handleImagePick,
-            icon: Icon(
-              Icons.attach_file,
-              size: 22,
-              color: (widget.disabled || widget.isLoading)
-                  ? Colors.grey
-                  : (isDark ? Colors.grey[300] : Colors.grey[600]),
-            ),
-            tooltip: 'Attach file',
-          ),
-          
-          // Send button
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _getSendButtonColor(theme),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              onPressed: _getSendButtonAction(),
-              padding: EdgeInsets.zero,
-              icon: Icon(
-                _getSendButtonIcon(),
-                size: 16,
-                color: (widget.disabled && !widget.isLoading) 
-                    ? Colors.grey[600] 
-                    : Colors.white,
-              ),
-              tooltip: widget.isLoading ? 'Stop' : 'Send message',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+//               // Text input
+//               Expanded(
+//                 child: RawKeyboardListener(
+//                   focusNode: _focusNode,
+//                   onKey: _handleKeyPress,
+//                   child: TextField(
+//                     controller: _textController,
+//                     enabled: !widget.disabled && !widget.isLoading,
+//                     maxLines: 5,
+//                     minLines: 1,
+//                     decoration: InputDecoration(
+//                       hintText: _selectedFiles.isNotEmpty
+//                           ? 'Hỏi gì về file này? (không bắt buộc)'
+//                           : widget.placeholder,
+//                       border: OutlineInputBorder(
+//                         borderRadius: BorderRadius.circular(20),
+//                         borderSide: BorderSide(
+//                           color: colorScheme.outline.withOpacity(0.3),
+//                         ),
+//                       ),
+//                       enabledBorder: OutlineInputBorder(
+//                         borderRadius: BorderRadius.circular(20),
+//                         borderSide: BorderSide(
+//                           color: colorScheme.outline.withOpacity(0.3),
+//                         ),
+//                       ),
+//                       focusedBorder: OutlineInputBorder(
+//                         borderRadius: BorderRadius.circular(20),
+//                         borderSide: BorderSide(
+//                           color: colorScheme.primary,
+//                           width: 2,
+//                         ),
+//                       ),
+//                       contentPadding: const EdgeInsets.symmetric(
+//                         horizontal: 16,
+//                         vertical: 12,
+//                       ),
+//                       filled: true,
+//                       fillColor: colorScheme.surface,
+//                     ),
+//                   ),
+//                 ),
+//               ),
 
-  Widget _buildControlsArea() {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          // Attachment button
-          _buildAttachmentButton(),
-          const Spacer(),
-          // Send/Stop button
-          _buildSendButton(),
-        ],
-      ),
-    );
-  }
+//               const SizedBox(width: 8),
 
-  Widget _buildAttachmentButton() {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: (widget.disabled || widget.isLoading) ? null : _handleImagePick,
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(
-            Icons.attach_file_rounded,
-            color: (widget.disabled || widget.isLoading)
-                ? Colors.grey.shade400
-                : Colors.grey.shade600,
-            size: 20,
-          ),
-        ),
-      ),
-    );
-  }
+//               // Send/Stop button
+//               IconButton(
+//                 onPressed: widget.disabled
+//                     ? null
+//                     : widget.isLoading
+//                         ? widget.onStop
+//                         : _submitMessage,
+//                 icon: Icon(
+//                   widget.isLoading ? Icons.stop : Icons.send,
+//                   color: widget.disabled
+//                       ? colorScheme.onSurface.withOpacity(0.4)
+//                       : colorScheme.primary,
+//                 ),
+//                 tooltip: widget.isLoading ? 'Dừng' : 'Gửi',
+//               ),
+//             ],
+//           ),
 
-  Widget _buildSendButton() {
-    final canSend = _isComposing || _selectedImage != null;
-    final isActive = widget.isLoading || canSend;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      child: Material(
-        color: _getModernSendButtonColor(isActive),
-        borderRadius: BorderRadius.circular(18),
-        elevation: isActive ? 2 : 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: widget.isLoading
-              ? _handleStop
-              : canSend
-                  ? _handleSubmit
-                  : null,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              widget.isLoading
-                  ? Icons.stop_rounded
-                  : Icons.arrow_upward_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getSendButtonColor(ThemeData theme) {
-    if (widget.isLoading) {
-      return Colors.red.shade600;
-    }
-    
-    if (widget.disabled) {
-      return Colors.grey[300]!;
-    }
-    
-    return theme.colorScheme.primary;
-  }
-
-  Color _getModernSendButtonColor(bool isActive) {
-    if (widget.isLoading) {
-      return Colors.red.shade600;
-    }
-
-    if (isActive) {
-      return Theme.of(context).primaryColor;
-    }
-
-    return Colors.grey.shade400;
-  }
-
-  IconData _getSendButtonIcon() {
-    return widget.isLoading ? Icons.stop_rounded : Icons.arrow_upward;
-  }
-
-  VoidCallback? _getSendButtonAction() {
-    if (widget.isLoading) {
-      return _handleStop;
-    }
-    
-    if (widget.disabled) {
-      return null;
-    }
-    
-    final canSend = _isComposing || _selectedImage != null;
-    return canSend ? _handleSubmit : null;
-  }
-}
-
-// Enums for configuration
-enum ChatInputMode {
-  homepage,  // Used in HomePage - redirects after submit
-  chat,      // Used in ChatPage - sends directly to controller
-}
-
-enum ChatInputStyle {
-  classic,   // Original chat_box style
-  modern,    // Modern chat input style (Grok/Claude inspired)
-}
-
-// Helper class for keyboard shortcuts
-class KeyboardShortcutHelper {
-  static String getShortcutText() {
-    // You can customize this based on platform
-    return 'Press Enter to send, Shift+Enter for new line';
-  }
-}
+//           // File type hint and status
+//           Padding(
+//             padding: const EdgeInsets.only(top: 8),
+//             child: Row(
+//               children: [
+//                 Expanded(
+//                   child: Text(
+//                     _selectedFiles.isEmpty
+//                         ? 'Supported: PDF, DOCX, TXT, CSV'
+//                         : '${_selectedFiles.length} file(s) selected',
+//                     style: TextStyle(
+//                       color: colorScheme.onSurface.withOpacity(0.6),
+//                       fontSize: 12,
+//                     ),
+//                   ),
+//                 ),
+//                 if (_selectedFiles.isNotEmpty)
+//                   Text(
+//                     'Max: 10 files, 50MB each',
+//                     style: TextStyle(
+//                       color: colorScheme.onSurface.withOpacity(0.5),
+//                       fontSize: 10,
+//                     ),
+//                   ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

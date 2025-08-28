@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_openai_stream/models/message.dart';
 import 'package:flutter_openai_stream/widgets/messages/message_bubble.dart';
+  
 
 class MessagesList extends StatelessWidget {
   final List<Message> messages;

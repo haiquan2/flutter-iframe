@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_openai_stream/core/utils/text_formatter.dart';
 import 'package:flutter_openai_stream/models/message.dart';
 import 'package:flutter_openai_stream/widgets/messages/loading_indicator.dart';
-import 'dart:html' as html;
 
 class MessageContent extends StatelessWidget {
   final Message message;
@@ -39,121 +38,59 @@ class MessageContent extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Show Image preview first if available
-                if (message.imageBytes != null) 
+                // Show File list if available
+                if (message.files != null && message.files!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
-                    child: _buildImagePreviewList(context, isDark),
+                    child: _buildFileList(context, isDark, message.files!),
                   ),
                 // Show user request below images
-                if (message.content.isNotEmpty)
+                if (message.text.isNotEmpty)
                   formattedMessage(context, isDark, message),
               ],
             ),
     );
   }
 
-  Widget _buildImagePreviewList(BuildContext context, bool isDark) {
+  Widget _buildFileList(BuildContext context, bool isDark, List<String> filePaths) {
     return Container(
       height: 80,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 1,
+        itemCount: filePaths.length,
         itemBuilder: (context, index) {
+          final filePath = filePaths[index];
+          final fileName = filePath.split('/').last;
           return Padding(
-            padding: EdgeInsets.only(right: index < 0 ? 8.0 : 0),
-            child: _buildImageThumbnail(context, isDark),
+            padding: EdgeInsets.only(right: index < filePaths.length - 1 ? 8.0 : 0),
+            child: _buildFileThumbnail(context, isDark, fileName),
           );
         },
       ),
     );
   }
 
-  Widget _buildImageThumbnail(BuildContext context, bool isDark) {
-    return GestureDetector(
-      onTap: () => _showImageInParent(),
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-            width: 1,
+  Widget _buildFileThumbnail(BuildContext context, bool isDark, String fileName) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.insert_drive_file, size: 24, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+          const SizedBox(height: 4),
+          Text(
+            fileName.length > 10 ? '${fileName.substring(0, 10)}...' : fileName,
+            style: TextStyle(fontSize: 10, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            textAlign: TextAlign.center,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(7),
-          child: Stack(
-            children: [
-              Image.memory(
-                message.imageBytes!,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    color: isDark ? Colors.grey[800] : Colors.grey[200],
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 20,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Error',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Icon(
-                    Icons.zoom_in,
-                    size: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
-  }
-
-  void _showImageInParent() {
-    // Convert image bytes to base64
-    final base64Image = html.window.btoa(String.fromCharCodes(message.imageBytes!));
-    // Post message to parent window
-    html.window.parent?.postMessage({
-      'type': 'showImage',
-      'imageSrc': 'data:image/jpeg;base64,$base64Image',
-    }, '*');
   }
 }

@@ -6,7 +6,7 @@ Widget formattedMessage(BuildContext context, bool isDark, Message message) {
     width: double.infinity,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: _parseMarkdownToWidgets(message.content, isDark, context),
+      children: _parseMarkdownToWidgets(message.text, isDark, context),
     ),
   );
 }

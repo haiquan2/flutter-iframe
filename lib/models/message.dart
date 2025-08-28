@@ -1,60 +1,35 @@
-import 'dart:typed_data';
-
 class Message {
-  final String content;
+  final String id;
+  final String text;
   final bool isUser;
   final DateTime timestamp;
   final bool isLoading;
-  final Uint8List? imageBytes;
-  final String? modelName;
+  final List<String>? files;
 
-  Message({
-    required this.content,
+  const Message({
+    required this.id,
+    required this.text,
     required this.isUser,
     required this.timestamp,
     this.isLoading = false,
-    this.imageBytes,
-    this.modelName,
+    this.files,
   });
 
   Message copyWith({
-    String? content,
+    String? id,
+    String? text,
     bool? isUser,
     DateTime? timestamp,
     bool? isLoading,
-    Uint8List? imageBytes,
-    String? modelName,
+    List<String>? files,
   }) {
     return Message(
-      content: content ?? this.content,
+      id: id ?? this.id,
+      text: text ?? this.text,
       isUser: isUser ?? this.isUser,
       timestamp: timestamp ?? this.timestamp,
       isLoading: isLoading ?? this.isLoading,
-      imageBytes: imageBytes ?? this.imageBytes,
-      modelName: modelName ?? this.modelName,
-    );
-  }
-
-  // Convert to JSON for potential storage
-  Map<String, dynamic> toJson() {
-    return {
-      'content': content,
-      'isUser': isUser,
-      'timestamp': timestamp.toIso8601String(),
-      'isLoading': isLoading,
-      'modelUsed': modelName,
-      // Note: imageBytes not included in JSON for storage efficiency
-    };
-  }
-
-  // Create from JSON
-  factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
-      content: json['content'],
-      isUser: json['isUser'],
-      timestamp: DateTime.parse(json['timestamp']),
-      isLoading: json['isLoading'] ?? false,
-      modelName: json['modelName'],
+      files: files ?? this.files,
     );
   }
 }
