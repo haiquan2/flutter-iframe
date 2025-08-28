@@ -2,7 +2,7 @@
   const scriptTag = document.currentScript;
 
   const config = {
-    widgetUrl: scriptTag.dataset.widgetUrl || 'http://localhost:5000',
+    widgetUrl: scriptTag.dataset.widgetUrl || 'https://flutter-iframe.vercel.app',
     buttonColor: scriptTag.dataset.buttonColor || '#6366F1',
     buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
     iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
@@ -38,8 +38,8 @@
   iframeContainer.style.position = 'fixed';
   iframeContainer.style.bottom = '24px';
   iframeContainer.style.right = '24px';
-  iframeContainer.style.width = '0px';
-  iframeContainer.style.height = '0px';
+  iframeContainer.style.width = '1px';
+  iframeContainer.style.height = '1px';
   iframeContainer.style.zIndex = '9998';
   iframeContainer.style.transition = 'all 0.3s ease';
   iframeContainer.style.overflow = 'hidden';
@@ -47,7 +47,7 @@
   iframeContainer.style.boxShadow = '2px 4px 12px rgba(0,0,0,0.2)';
 
   const iframe = document.createElement('iframe');
-  iframe.src = `${config.widgetUrl}/?iframe=true&chatId=${chatId}&theme=${config.theme}&v=${Date.now()}`;
+  iframe.src = `${config.widgetUrl}/?iframe=true`;
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
