@@ -43,7 +43,7 @@ class _ChatPageState extends State<ChatPage> {
   // Lấy theme từ URL parameters
   String get _urlTheme {
     final queryParams = Uri.parse(web.window.location.href).queryParameters;
-    return queryParams['theme'] ?? 'light';
+    return queryParams['theme'] ?? 'dark';
   }
 
   @override

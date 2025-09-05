@@ -60,6 +60,14 @@
   let isOpen = false;
   let isMouseOverIframe = false;
   let originalOverflow = null;
+  let iframeSrc = config.widgetUrl;
+  if (iframeSrc.includes('?')) {
+    iframeSrc += `&iframe=true&theme=${config.theme}`;
+  } else {
+    iframeSrc += `?iframe=true&theme=${config.theme}`;
+  }
+  iframe.src = iframeSrc;
+
 
   // Track mouse position relative to iframe
   function updateMousePosition(event) {
@@ -214,7 +222,7 @@
     }
     
     if (event.data.type === 'iframe_ready') {
-      console.log('Iframe ready:', event.data.chatId);
+      // console.log('Iframe ready:', event.data.chatId);
     }
     
     if (event.data.type === 'scroll_request') {
