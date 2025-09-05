@@ -2,12 +2,12 @@
   const scriptTag = document.currentScript;
 
   const config = {
-    widgetUrl: scriptTag.dataset.widgetUrl || 'https://flutter-iframe.vercel.app',
+    widgetUrl: scriptTag.dataset.widgetUrl || 'http://localhost:5000/',
     buttonColor: scriptTag.dataset.buttonColor || '#6366F1',
     buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
     iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
     iframeHeight: parseInt(scriptTag.dataset.iframeHeight) || 600,
-    theme: scriptTag.dataset.theme || 'light',
+    theme: scriptTag.dataset.theme || 'dark',
     buttonIcon: scriptTag.dataset.buttonIcon || '💬',
   };
 
