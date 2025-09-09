@@ -45,6 +45,7 @@ app.*.map.json
 
 # environment files
 .env
+/lib/env/env.deploy.dart
 
 
 

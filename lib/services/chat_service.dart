@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter_openai_stream/env.deploy.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:html' as html;
@@ -21,8 +22,8 @@ class WebFile {
 }
 
 class ChatService {
-  static const String baseUrl = 'https://wm5090.pythera.ai/appv2';
-  static const String sessionsUrl = 'https://wm5090.pythera.ai/appv1/api/v1/sessions/';
+  static const String baseUrl = Env.baseUrl;
+  static const String sessionsUrl = Env.sessionsUrl;
   static final Uuid _uuid = Uuid();
   static String? _sessionId;
 
@@ -103,7 +104,7 @@ class ChatService {
       }
 
       final response = await dio.post(
-        '$baseUrl/questions',
+        '$baseUrl/lumir/chat',
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );
