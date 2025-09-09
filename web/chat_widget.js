@@ -33,7 +33,6 @@
   button.style.justifyContent = 'center';
   button.innerHTML = `<span style="font-size: 24px; color: white;">${config.buttonIcon}</span>`;
 
-  // Create iframe container to better control events
   const iframeContainer = document.createElement('div');
   iframeContainer.style.position = 'fixed';
   iframeContainer.style.bottom = '24px';
