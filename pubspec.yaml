@@ -33,7 +33,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
   assets:
-    - .env
     - lib/images/icon-chatbot.png
+
+assets:
+  - .env
