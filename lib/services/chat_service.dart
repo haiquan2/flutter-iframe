@@ -45,11 +45,10 @@ class ChatService {
       if (response.statusCode == 200) {
         final sessionId = response.data['session_id'] as String?;
         _sessionId = sessionId;
-        print('Session created: $sessionId');
         return sessionId;
       }
     } catch (e) {
-      print('Session creation error: $e');
+      // print('Session creation error: $e');
     }
     return null;
   }
@@ -75,7 +74,7 @@ class ChatService {
     if (_sessionId == null) {
       await _createSession();
       if (_sessionId == null) {
-        yield 'Error: Không tạo được session';
+        yield 'Sorry, our system is experiencing issues. Please try again later.';
         return;
       }
     }
@@ -83,7 +82,7 @@ class ChatService {
     try {
       final dio = Dio();
       final formData = FormData.fromMap({
-        'question': question.trim().isEmpty ? 'Phân tích file này' : question.trim(),
+        'question': question.trim().isEmpty ? 'Analyze this file' : question.trim(),
         'session_id': _sessionId!,
         'language': 'vi',
         'rerank': 'false',
@@ -110,19 +109,20 @@ class ChatService {
       );
 
       if (response.statusCode == 200) {
-        final answer = response.data['answer']?.toString() ?? 'Xin lỗi, không có phản hồi';
-        
+        final answer = response.data['answer']?.toString() ?? 'Sorry, no response available';
+
         // Stream từng chunk
         final chunks = _splitText(answer);
         for (var chunk in chunks) {
           await Future.delayed(const Duration(milliseconds: 50));
           yield chunk;
         }
+        // yield answer;
       } else {
-        yield 'Error: ${response.statusCode}';
+        yield 'Sorry, our system is experiencing issues. Please try again later.';
       }
     } catch (e) {
-      yield 'Error: $e';
+      yield 'Sorry, our system is experiencing issues. Please try again later.';
     }
   }
 
@@ -138,22 +138,30 @@ class ChatService {
     return result;
   }
 
-  // Split text thành chunks cho streaming effect
   static List<String> _splitText(String text) {
-    final sentences = text.split(RegExp(r'(?<=[.!?])\s+'));
-    final chunks = <String>[];
-    var currentChunk = StringBuffer();
-
-    for (var sentence in sentences) {
-      if (currentChunk.length + sentence.length > 100) {
-        if (currentChunk.isNotEmpty) {
-          chunks.add(currentChunk.toString());
-          currentChunk.clear();
-        }
+  // Chia theo từ nhưng BẢO TOÀN line breaks và spaces
+    final List<String> chunks = [];
+    int currentIndex = 0;
+    const int chunkSize = 30;
+    
+    while (currentIndex < text.length) {
+      int endIndex = currentIndex + chunkSize;
+      
+      // Không vượt quá độ dài text
+      if (endIndex >= text.length) {
+        chunks.add(text.substring(currentIndex));
+        break;
       }
-      currentChunk.write(currentChunk.isEmpty ? sentence : ' $sentence');
+      
+      // Tìm space gần nhất để không cắt đứt từ
+      int spaceIndex = text.lastIndexOf(' ', endIndex);
+      if (spaceIndex > currentIndex) {
+        endIndex = spaceIndex + 1; // +1 để giữ space
+      }
+      
+      chunks.add(text.substring(currentIndex, endIndex));
+      currentIndex = endIndex;
     }
-    if (currentChunk.isNotEmpty) chunks.add(currentChunk.toString());
     
     return chunks.where((chunk) => chunk.trim().isNotEmpty).toList();
   }

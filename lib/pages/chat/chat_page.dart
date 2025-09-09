@@ -172,11 +172,11 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() async {
     final messageText = _questionController.text.trim();
     if (messageText.isEmpty && _files.isEmpty) {
-      _showSnackBar('Vui lòng nhập tin nhắn hoặc chọn file');
+      _showSnackBar('Please enter a message or select files to upload.', isError: true);
       return;
     }
 
-    final finalMessage = messageText.isEmpty ? 'Phân tích file này' : messageText;
+    final finalMessage = messageText.isEmpty ? 'Analyze this file' : messageText;
 
     setState(() {
       _isUploading = true;
@@ -233,12 +233,12 @@ class _ChatPageState extends State<ChatPage> {
           if (mounted) {
             setState(() {
               _messages[botMessageIndex] = _messages[botMessageIndex].copyWith(
-                text: 'Có lỗi xảy ra: $error',
+                text: 'Sorry, an error occurred!',
                 isLoading: false,
               );
               _isUploading = false;
             });
-            _showSnackBar('Có lỗi xảy ra', isError: true);
+            _showSnackBar('Sorry, an error occurred!');
           }
         },
         onDone: () {
@@ -274,7 +274,7 @@ class _ChatPageState extends State<ChatPage> {
         final lastIndex = _messages.length - 1;
         _messages[lastIndex] = _messages[lastIndex].copyWith(
           text: _messages[lastIndex].text.isEmpty 
-            ? 'Đã dừng phản hồi' 
+            ? 'The response was interrupted!' 
             : _messages[lastIndex].text,
           isLoading: false,
         );
@@ -291,7 +291,7 @@ class _ChatPageState extends State<ChatPage> {
     });
     _questionController.clear();
     ChatService.clearSession();
-    _showSnackBar('Đã xóa cuộc trò chuyện', isSuccess: true);
+    _showSnackBar('The conversation has been cleared!', isSuccess: true);
   }
 
   void _removeFile(int index) {
@@ -383,7 +383,7 @@ class _ChatPageState extends State<ChatPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'AI Assistant',
+                    'Lumir Chat',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -399,7 +399,7 @@ class _ChatPageState extends State<ChatPage> {
                       size: 18,
                       color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                     ),
-                    tooltip: 'Xóa chat',
+                    tooltip: 'Clear chat',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
                       minWidth: 32,
@@ -418,7 +418,7 @@ class _ChatPageState extends State<ChatPage> {
     return AppBar(
       title: Text(_currentChatId != 'default' 
         ? 'Chat (${_currentChatId.length > 8 ? _currentChatId.substring(0, 8) : _currentChatId})'
-        : 'AI Chat'
+        : 'Lumir Chat'
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 1,
@@ -459,7 +459,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Xin chào! Tôi có thể giúp gì cho bạn?',
+              'Welcome to Lumir Chat',
               style: TextStyle(
                 fontSize: _isIframeMode ? 15 : 18,
                 fontWeight: FontWeight.w600,
@@ -469,7 +469,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Hỏi bất cứ điều gì hoặc tải file lên để phân tích',
+              'Ask anything or upload a file for analysis',
               style: TextStyle(
                 fontSize: _isIframeMode ? 12 : 14,
                 color: isDarkMode ? Colors.white60 : Colors.grey.shade600,
@@ -483,10 +483,10 @@ class _ChatPageState extends State<ChatPage> {
                 runSpacing: 8,
                 alignment: WrapAlignment.center,
                 children: [
-                  _buildQuickAction('📝 Viết nội dung', isDarkMode),
-                  _buildQuickAction('💡 Ý tưởng', isDarkMode),
-                  _buildQuickAction('🔍 Phân tích', isDarkMode),
-                  _buildQuickAction('❓ Hỏi đáp', isDarkMode),
+                  _buildQuickAction('📝 About Lumir', isDarkMode),
+                  _buildQuickAction('💡 Ideas', isDarkMode),
+                  _buildQuickAction('🔍 Analyze', isDarkMode),
+                  _buildQuickAction('❓ Q&A', isDarkMode),
                 ],
               ),
             ],
@@ -697,8 +697,8 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     decoration: InputDecoration(
                       hintText: _files.isNotEmpty 
-                        ? 'Hỏi về files này...'
-                        : 'Nhập tin nhắn...',
+                        ? 'Ask about this file...'
+                        : 'Enter your message...',
                       hintStyle: TextStyle(
                         color: isDarkMode ? Colors.white38 : Colors.grey.shade500,
                         fontSize: _isIframeMode ? 13 : 14,

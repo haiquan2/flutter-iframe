@@ -46,7 +46,7 @@ class MessageContent extends StatelessWidget {
                   ),
                 // Show user request below images
                 if (message.text.isNotEmpty)
-                  formattedMessage(context, isDark, message),
+                  formattedMessage(context, isDark, message)
               ],
             ),
     );

@@ -16,7 +16,7 @@ Widget buildLoadingIndicator() {
       ),
       const SizedBox(width: 12),
       Text(
-        'AI is thinking...',
+        'Wait a second...',
         style: TextStyle(
           color: Colors.grey[600],
           fontSize: 14,
