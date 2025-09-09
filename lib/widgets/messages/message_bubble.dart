@@ -14,54 +14,80 @@ class MessageBubble extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: message.isUser
-                  ? theme.colorScheme.primary
-                  : (isDark
-                      ? const Color(0xFF4F46E5)
-                      : const Color(0xFF6366F1)),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  // ignore: deprecated_member_use
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      child: message.isUser ? _buildUserMessage(isDark) : _buildBotMessage(isDark),
+    );
+  }
+
+  Widget _buildUserMessage(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Container(
+            constraints: const BoxConstraints(
+              maxWidth: 280, 
             ),
-            child: Icon(
-              message.isUser ? Icons.person : Icons.auto_awesome,
-              color: Colors.white,
-              size: 20,
+            child: MessageContent(message: message),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBotMessage(bool isDark) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF374151) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              'lib/images/icon-chatbot.png',
+              width: 32,
+              height: 32,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.auto_awesome,
+                  color: isDark ? Colors.white70 : Colors.grey[600],
+                  size: 18,
+                );
+              },
             ),
           ),
+        ),
 
-          const SizedBox(width: 16),
+        const SizedBox(width: 12),
 
-          // Message Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Message Container
-                MessageContent(message: message),
-
-                // Action Buttons (for AI messages)
-                MessageActions(message: message),
-              ],
-            ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MessageContent(message: message),
+              MessageActions(message: message),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

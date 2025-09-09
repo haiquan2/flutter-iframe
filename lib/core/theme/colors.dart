@@ -52,4 +52,6 @@ class AppColors {
   static const lightPurple = Color(0xFFE5E7EB); 
   static const accentBlue = Color(0xFF3B82F6); 
   static const softLavender = Color(0xFFF3F4F6); 
+  static const primaryLumir = Color(0xFFE9B460);
+  static const boxLumir = Color(0xFFE5E5E5);
 }

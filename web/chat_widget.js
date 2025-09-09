@@ -7,7 +7,7 @@
     buttonSize: parseInt(scriptTag.dataset.buttonSize) || 60,
     iframeWidth: parseInt(scriptTag.dataset.iframeWidth) || 400,
     iframeHeight: parseInt(scriptTag.dataset.iframeHeight) || 600,
-    theme: scriptTag.dataset.theme || 'dark',
+    theme: scriptTag.dataset.theme || 'light',
     buttonIcon: scriptTag.dataset.buttonIcon || '💬',
   };
 

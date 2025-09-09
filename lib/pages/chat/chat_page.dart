@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:js_interop';
 import 'package:flutter/material.dart';
+import 'package:flutter_openai_stream/core/theme/colors.dart';
 import '../../services/chat_service.dart';
 import '../../models/message.dart';
 import 'widgets/messages_list.dart';
@@ -49,7 +50,6 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    print('ChatPage initialized with chatId: ${_currentChatId}');
     
     // Thông báo iframe đã sẵn sàng
     if (_isIframeMode) {
@@ -109,7 +109,7 @@ class _ChatPageState extends State<ChatPage> {
       });
       
       if (mounted) {
-        _showSnackBar('Đã chọn ${files.length} file(s)', isSuccess: true);
+        _showSnackBar('Uploaded ${files.length} file(s)', isSuccess: true);
       }
     }
   }
@@ -242,7 +242,6 @@ class _ChatPageState extends State<ChatPage> {
           }
         },
         onDone: () {
-          print('Streaming completed');
           if (mounted) {
             setState(() {
               _isUploading = false;
@@ -251,17 +250,16 @@ class _ChatPageState extends State<ChatPage> {
         },
       );
     } catch (e) {
-      print('Error in sendMessage: $e');
       if (mounted) {
         setState(() {
           final botMessageIndex = _messages.length - 1;
           _messages[botMessageIndex] = _messages[botMessageIndex].copyWith(
-            text: 'Có lỗi xảy ra: $e',
+            text: 'Sorry, an error occurred!',
             isLoading: false,
           );
           _isUploading = false;
         });
-        _showSnackBar('Có lỗi xảy ra', isError: true);
+        _showSnackBar('Sorry, an error occurred!', isError: true);
       }
     }
   }
@@ -347,7 +345,7 @@ class _ChatPageState extends State<ChatPage> {
       preferredSize: const Size.fromHeight(45),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF2a2a2a) : Colors.white,
+          color: AppColors.primaryLumir,
           border: Border(
             bottom: BorderSide(
               color: isDarkMode 
@@ -362,32 +360,32 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.blue.shade400,
-                        Colors.purple.shade400,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
+                // Container(
+                //   width: 28,
+                //   height: 28,
+                //   decoration: BoxDecoration(
+                    // gradient: LinearGradient(
+                    //   colors: [
+                    //     Colors.blue.shade400,
+                    //     Colors.purple.shade400,
+                    //   ],
+                    // ),
+                //     borderRadius: BorderRadius.circular(8),
+                //   ),
+                //   child: const Icon(
+                //     Icons.auto_awesome,
+                //     color: Colors.white,
+                //     size: 16,
+                //   ),
+                // ),
                 const SizedBox(width: 10),
-                Expanded(
+                const Expanded(
                   child: Text(
-                    'Lumir Chat',
+                    'LUMIR',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : Colors.grey.shade800,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -418,7 +416,7 @@ class _ChatPageState extends State<ChatPage> {
     return AppBar(
       title: Text(_currentChatId != 'default' 
         ? 'Chat (${_currentChatId.length > 8 ? _currentChatId.substring(0, 8) : _currentChatId})'
-        : 'Lumir Chat'
+        : 'LUMIR'
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 1,
@@ -439,27 +437,22 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            SizedBox(
               width: _isIframeMode ? 60 : 80,
               height: _isIframeMode ? 60 : 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.shade400.withOpacity(0.8),
-                    Colors.purple.shade400.withOpacity(0.8),
-                  ],
-                ),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.auto_awesome,
-                size: _isIframeMode ? 30 : 40,
-                color: Colors.white,
+                child: Image.asset(
+                  'lib/images/icon-chatbot.png',
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Welcome to Lumir Chat',
+              'Welcome to LUMIR',
               style: TextStyle(
                 fontSize: _isIframeMode ? 15 : 18,
                 fontWeight: FontWeight.w600,
@@ -507,13 +500,13 @@ class _ChatPageState extends State<ChatPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isDarkMode 
-            ? Colors.white.withOpacity(0.1) 
+            ? AppColors.primaryLumir
             : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDarkMode 
-              ? Colors.white.withOpacity(0.2) 
-              : Colors.grey.shade300,
+              ? AppColors.primaryLumir
+              : AppColors.primaryLumir,
           ),
         ),
         child: Text(
@@ -698,7 +691,7 @@ class _ChatPageState extends State<ChatPage> {
                     decoration: InputDecoration(
                       hintText: _files.isNotEmpty 
                         ? 'Ask about this file...'
-                        : 'Enter your message...',
+                        : 'Ask LUMIR...',
                       hintStyle: TextStyle(
                         color: isDarkMode ? Colors.white38 : Colors.grey.shade500,
                         fontSize: _isIframeMode ? 13 : 14,
@@ -728,8 +721,8 @@ class _ChatPageState extends State<ChatPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: _isUploading 
-                          ? [Colors.red.shade400, Colors.red.shade600]
-                          : [Colors.blue.shade400, Colors.purple.shade400],
+                          ? [AppColors.primaryLumir, AppColors.primaryLumir]
+                          : [AppColors.primaryLumir, AppColors.primaryLumir],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
