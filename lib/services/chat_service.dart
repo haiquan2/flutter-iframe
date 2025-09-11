@@ -162,14 +162,28 @@ class ChatService {
 
     try {
       final dio = Dio();
-      final formData = FormData.fromMap({
+      // Prepare form data with user info
+      final formDataMap = {
         'question': question.trim().isEmpty ? 'Analyze this file' : question.trim(),
         'session_id': _sessionId!,
-        // Add user info to request
-        if (_currentUser?.name != null) 'name': _currentUser!.name!,
-        if (_currentUser?.username != null) 'username': _currentUser!.username!,
-        if (_currentUser?.birthday != null) 'birthday': _currentUser!.birthday!,
-      });
+      };
+      
+      // Add user info to request if available
+      if (_currentUser?.name != null) {
+        formDataMap['name'] = _currentUser!.name!;
+        print('📝 Adding name: ${_currentUser!.name}');
+      }
+      if (_currentUser?.username != null) {
+        formDataMap['username'] = _currentUser!.username!;
+        print('📝 Adding username: ${_currentUser!.username}');
+      }
+      if (_currentUser?.birthday != null) {
+        formDataMap['birthday'] = _currentUser!.birthday!;
+        print('📝 Adding birthday: ${_currentUser!.birthday}');
+      }
+      
+      print('📋 Full FormData: $formDataMap');
+      final formData = FormData.fromMap(formDataMap);
 
       if (files != null) {
         for (var file in files) {

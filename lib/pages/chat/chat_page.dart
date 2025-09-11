@@ -56,17 +56,20 @@ class _ChatPageState extends State<ChatPage> {
 
     ChatService.userStream?.listen((userInfo) {
       if (mounted) {
+        print('🔄 User stream received: ${userInfo.name}, rebuilding UI...');
         setState(() {
           _isWaitingForUser = false; // User data đã nhận được
         });
+        print('✅ UI rebuilt with user: ${userInfo.name}');
       }
     });
 
     // Timeout để không đợi mãi nếu không có user data
     Timer(const Duration(seconds: 2), () {
       if (mounted && _isWaitingForUser) {
+        print('⏰ Timeout: Stop waiting for user data');
         setState(() {
-          _isWaitingForUser = false; // Stop waiting after 3 seconds
+          _isWaitingForUser = false; // Stop waiting after 2 seconds
         });
       }
     });
@@ -452,6 +455,9 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildEmptyState(bool isDarkMode) {
     final user = ChatService.currentUser;
+    
+    // Debug log để track state
+    print('🖼️ Building empty state - User: ${user?.name}, Waiting: $_isWaitingForUser');
 
     return Center(
       child: Padding(
@@ -475,7 +481,33 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(height: 16),
             
             // Show loading, user greeting, or default welcome
-             if (user != null) ...[
+            if (_isIframeMode && _isWaitingForUser) ...[
+              // Loading state khi đang đợi user data
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isDarkMode ? Colors.white60 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Connecting...',
+                    style: TextStyle(
+                      fontSize: _isIframeMode ? 14 : 16,
+                      color: isDarkMode ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (user != null) ...[
+              // Hiển thị chào user khi đã có data
               Text(
                 'Hello, ${user.name}!',
                 style: TextStyle(
@@ -486,6 +518,7 @@ class _ChatPageState extends State<ChatPage> {
                 textAlign: TextAlign.center,
               ),
             ] else ...[
+              // Fallback khi không có user data
               Text(
                 'Welcome to LUMIR',
                 style: TextStyle(
