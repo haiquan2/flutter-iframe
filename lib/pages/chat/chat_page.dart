@@ -52,25 +52,19 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    print('🏁 ChatPage initState - ChatId: $_currentChatId');
 
     // Initialize ChatService
     ChatService.initUserDataListener();
 
     // Get any existing user data immediately
     _currentUser = ChatService.currentUser;
-    if (_currentUser != null) {
-      print('📦 Found existing user data: ${_currentUser!.name}');
-    }
 
     // Listen to user stream for updates
     _userSubscription = ChatService.userStream?.listen((userInfo) {
       if (mounted) {
-        print('🔄 User stream received: ${userInfo.name}, updating local state...');
         setState(() {
           _currentUser = userInfo;
         });
-        print('✅ Local user state updated: ${userInfo.name}');
       }
     });
 
@@ -87,8 +81,6 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
     });
-    
-    print('✅ ChatPage initialization complete');
   }
 
   void _notifyParentReady() {
@@ -103,8 +95,6 @@ class _ChatPageState extends State<ChatPage> {
       'type': 'iframe_ready', 
       'chatId': _currentChatId,
     }.toString() as JSAny?, '*' as JSAny);
-    
-    print('📡 Notified parent that iframe is ready with chatId: $_currentChatId');
   }
 
   @override

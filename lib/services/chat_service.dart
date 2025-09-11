@@ -69,7 +69,6 @@ class ChatService {
   static UserInfo? get currentUser {
     // First try in-memory data
     if (_currentUserData != null) {
-      print('🔍 Getting currentUser from memory: ${_currentUserData!.name}');
       return _currentUserData;
     }
     
@@ -79,14 +78,12 @@ class ChatService {
       if (stored != null) {
         final userData = json.decode(stored);
         _currentUserData = UserInfo.fromMap(userData);
-        print('🔍 Restored currentUser from storage: ${_currentUserData!.name}');
         return _currentUserData;
       }
     } catch (e) {
-      print('⚠️ Failed to restore user from storage: $e');
+      // Silent fail
     }
     
-    print('🔍 Getting currentUser: null (no data available)');
     return null;
   }
 
@@ -98,56 +95,42 @@ class ChatService {
     return _sessionId;
   }
 
-  // Initialize postMessage listener with improved persistence
+    // Initialize postMessage listener with improved persistence
   static void initUserDataListener() {
     if (_isListenerInitialized) {
-      print('♻️ ChatService listener already initialized, current user: ${currentUser?.name}');
       return;
     }
     
     _isListenerInitialized = true;
     _userStreamController = StreamController<UserInfo>.broadcast();
-    print('🎯 ChatService initialized. Setting up persistent user data listener...');
     
     // Restore any existing data from storage
     _restoreFromStorage();
     
     html.window.onMessage.listen((event) {
       try {
-        print('📨 Received postMessage: ${event.data}');
-        
         Map<String, dynamic>? data;
         
         if (event.data is String) {
           try {
             data = json.decode(event.data);
           } catch (e) {
-            print('⚠️ Failed to parse JSON string: $e');
             return;
           }
         } else if (event.data is Map) {
           data = Map<String, dynamic>.from(event.data);
         } else {
-          print('⚠️ Unknown message type: ${event.data.runtimeType}');
           return;
         }
         
         if (data != null && data['type'] == 'USER_INFO' && data['payload'] != null) {
           final userInfo = UserInfo.fromMap(Map<String, dynamic>.from(data['payload']));
           _setUserInfo(userInfo);
-          print('✅ Successfully processed USER_INFO message');
-        } else if (data != null && (data['type'] == 'PING' || data['type'] == 'IFRAME_READY' || data['type'] == 'iframe_ready')) {
-          print('🏓 Received ${data['type']} from parent');
-        } else {
-          print('ℹ️ Ignoring message type: ${data?['type']}');
         }
       } catch (e) {
-        print('❌ Error parsing user data: $e');
-        print('❌ Raw event data: ${event.data}');
+        // Silent fail
       }
     });
-    
-    print('🎯 ChatService initialized with persistence support');
   }
 
   // Restore data from browser storage
@@ -159,22 +142,18 @@ class ChatService {
       if (userStored != null) {
         final userData = json.decode(userStored);
         _currentUserData = UserInfo.fromMap(userData);
-        print('📦 Restored user from storage: ${_currentUserData!.name}');
       }
       
       if (sessionStored != null) {
         _sessionId = sessionStored;
-        print('📦 Restored session from storage: $_sessionId');
       }
     } catch (e) {
-      print('⚠️ Failed to restore from storage: $e');
+      // Silent fail
     }
   }
 
   // Set user info with persistence to browser storage
   static void _setUserInfo(UserInfo userInfo) {
-    print('🎭 Setting user info: ${userInfo.name} (@${userInfo.username})');
-    
     // Set in memory
     _currentUserData = userInfo;
     _sessionId = userInfo.sessionId ?? _sessionId;
@@ -191,15 +170,12 @@ class ChatService {
       if (_sessionId != null) {
         html.window.sessionStorage[_sessionStorageKey] = _sessionId!;
       }
-      
-      print('💾 User data persisted to storage');
     } catch (e) {
-      print('⚠️ Failed to persist user data: $e');
+      // Silent fail
     }
     
     // Notify listeners
     _userStreamController?.add(userInfo);
-    print('✅ User logged in and persisted: ${userInfo.name} (@${userInfo.username})');
   }
 
   // Get user stream
@@ -260,7 +236,6 @@ class ChatService {
     List<WebFile>? files,
   }) async* {
     final user = currentUser; // Use the persistent getter
-    print('🎭 Upload starting - Current user: ${user?.name} (@${user?.username})');
     
     String? sessionId = currentSessionId;
     if (sessionId == null) {
@@ -281,18 +256,14 @@ class ChatService {
       // Add user info to request if available
       if (user?.name != null) {
         formDataMap['name'] = user!.name!;
-        print('📝 Adding name: ${user.name}');
       }
       if (user?.username != null) {
         formDataMap['username'] = user!.username!;
-        print('📝 Adding username: ${user.username}');
       }
       if (user?.birthday != null) {
         formDataMap['birthday'] = user!.birthday!;
-        print('📝 Adding birthday: ${user.birthday}');
       }
       
-      print('📋 Full FormData: $formDataMap');
       final formData = FormData.fromMap(formDataMap);
 
       if (files != null) {
@@ -308,8 +279,6 @@ class ChatService {
           ));
         }
       }
-
-      print('🚀 Sending request with user: ${user?.name} (@${user?.username})');
 
       final response = await dio.post(
         '$baseUrl/lumir/chat/v1',
@@ -333,7 +302,6 @@ class ChatService {
         yield 'Sorry, our system is experiencing issues. Please try again later.';
       }
     } catch (e) {
-      print('❌ Chat error: $e');
       yield 'Sorry, our system is experiencing issues. Please try again later.';
     }
   }
@@ -389,24 +357,6 @@ class ChatService {
   static void clearAll() {
     clearSession();
     clearUserData();
-    print('🧹 Cleared all user data and session');
-  }
-  
-  // Debug method
-  static void debugState() {
-    print('🐛 ChatService Debug State:');
-    print('   - _currentUserData: ${_currentUserData?.name}');
-    print('   - currentUser getter: ${currentUser?.name}');
-    print('   - _sessionId: $_sessionId');
-    print('   - currentSessionId getter: $currentSessionId');
-    print('   - _isListenerInitialized: $_isListenerInitialized');
-    print('   - _userStreamController: ${_userStreamController != null ? "exists" : "null"}');
-    
-    // Check browser storage
-    final userStored = html.window.sessionStorage[_userStorageKey];
-    final sessionStored = html.window.sessionStorage[_sessionStorageKey];
-    print('   - Browser storage user: $userStored');
-    print('   - Browser storage session: $sessionStored');
   }
   
   static String formatFileSize(int size) {
