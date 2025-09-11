@@ -52,10 +52,24 @@ class ChatService {
   static String? _sessionId;
   static UserInfo? _currentUser;
   static StreamController<UserInfo>? _userStreamController;
+  static bool _isListenerInitialized = false; // Flag để đảm bảo chỉ init 1 lần
 
   // Initialize postMessage listener
   static void initUserDataListener() {
+    // Chỉ init 1 lần duy nhất
+    if (_isListenerInitialized) {
+      print('♻️ ChatService listener already initialized, preserving user: ${_currentUser?.name}');
+      return;
+    }
+    
+    _isListenerInitialized = true;
     _userStreamController = StreamController<UserInfo>.broadcast();
+    print('🎯 ChatService initialized. Waiting for USER_INFO from parent via postMessage...');
+    
+    // Log current user state
+    if (_currentUser != null) {
+      print('💾 Preserved user data: ${_currentUser!.name} (@${_currentUser!.username})');
+    }
     
     html.window.onMessage.listen((event) {
       try {
@@ -152,6 +166,10 @@ class ChatService {
     required String question,
     List<WebFile>? files,
   }) async* {
+    // Debug current user state at the start of upload
+    print('🎭 Upload starting - Current user: ${_currentUser?.name} (@${_currentUser?.username})');
+    print('🔍 User object details: $_currentUser');
+    
     if (_sessionId == null) {
       await _createSession();
       if (_sessionId == null) {
