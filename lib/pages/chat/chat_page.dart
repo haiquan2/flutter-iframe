@@ -68,6 +68,7 @@ class _ChatPageState extends State<ChatPage> {
     Timer(const Duration(seconds: 2), () {
       if (mounted && _isWaitingForUser) {
         print('⏰ Timeout: Stop waiting for user data');
+        print('🔍 Current user at timeout: ${ChatService.currentUser?.name}');
         setState(() {
           _isWaitingForUser = false; // Stop waiting after 2 seconds
         });
@@ -88,10 +89,19 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _notifyParentReady() {
+    // Gửi cả hai format để đảm bảo compatibility
     web.window.parent?.postMessage({
-      'type': 'iframe_ready',
+      'type': 'IFRAME_READY',
       'chatId': _currentChatId,
     }.toString() as JSAny?, '*' as JSAny);
+    
+    // Backup với format cũ
+    web.window.parent?.postMessage({
+      'type': 'iframe_ready', 
+      'chatId': _currentChatId,
+    }.toString() as JSAny?, '*' as JSAny);
+    
+    print('📡 Notified parent that iframe is ready with chatId: $_currentChatId');
   }
 
   @override
@@ -458,6 +468,13 @@ class _ChatPageState extends State<ChatPage> {
     
     // Debug log để track state
     print('🖼️ Building empty state - User: ${user?.name}, Waiting: $_isWaitingForUser');
+    
+    // Debug chi tiết hơn khi user là null
+    if (user == null) {
+      print('🚨 User is NULL! Debug info:');
+      print('   - _isWaitingForUser: $_isWaitingForUser');
+      print('   - ChatService static state check...');
+    }
 
     return Center(
       child: Padding(

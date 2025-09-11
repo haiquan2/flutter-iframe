@@ -96,8 +96,8 @@ class ChatService {
           final userInfo = UserInfo.fromMap(Map<String, dynamic>.from(data['payload']));
           _setUserInfo(userInfo);
           print('✅ Successfully processed USER_INFO message');
-        } else if (data != null && data['type'] == 'PING') {
-          print('🏓 Received PING from parent');
+        } else if (data != null && (data['type'] == 'PING' || data['type'] == 'IFRAME_READY' || data['type'] == 'iframe_ready')) {
+          print('🏓 Received ${data['type']} from parent');
         } else {
           print('ℹ️ Ignoring message type: ${data?['type']}');
         }
@@ -112,6 +112,7 @@ class ChatService {
 
   // Set user info and notify listeners
   static void _setUserInfo(UserInfo userInfo) {
+    print('🎭 Setting user info: ${userInfo.name} (@${userInfo.username})');
     _currentUser = userInfo;
     _sessionId = userInfo.sessionId; // Use provided session or keep existing
     _userStreamController?.add(userInfo);
@@ -120,7 +121,10 @@ class ChatService {
 
   // Get user stream
   static Stream<UserInfo>? get userStream => _userStreamController?.stream;
-  static UserInfo? get currentUser => _currentUser;
+  static UserInfo? get currentUser {
+    print('🔍 Getting currentUser: ${_currentUser?.name}');
+    return _currentUser;
+  }
 
   // Tự động tạo session
   static Future<String?> _createSession() async {
