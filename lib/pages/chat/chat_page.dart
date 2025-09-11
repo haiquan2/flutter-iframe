@@ -63,7 +63,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     // Timeout để không đợi mãi nếu không có user data
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 2), () {
       if (mounted && _isWaitingForUser) {
         setState(() {
           _isWaitingForUser = false; // Stop waiting after 3 seconds
@@ -475,31 +475,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(height: 16),
             
             // Show loading, user greeting, or default welcome
-            if (_isIframeMode && _isWaitingForUser) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isDarkMode ? Colors.white60 : Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Connecting...',
-                    style: TextStyle(
-                      fontSize: _isIframeMode ? 14 : 16,
-                      color: isDarkMode ? Colors.white60 : Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ] else if (user != null) ...[
+             if (user != null) ...[
               Text(
                 'Hello, ${user.name}!',
                 style: TextStyle(
