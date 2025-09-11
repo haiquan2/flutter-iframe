@@ -220,7 +220,6 @@ class ChatService {
         },
         options: Options(
           headers: {'accept': 'application/json', 'Content-Type': 'application/json'},
-          connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
         ),
       );
@@ -317,7 +316,6 @@ class ChatService {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
-          connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 60),
         ),
       );
