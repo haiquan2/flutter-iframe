@@ -26,6 +26,7 @@ class _ChatPageState extends State<ChatPage> {
   StreamSubscription<String>? _streamSubscription;
   final FocusNode _inputFocusNode = FocusNode();
   bool _isTyping = false;
+  bool _isWaitingForUser = true; // Thêm flag để đợi user data
 
   // Lấy chatId từ widget hoặc URL
   String get _currentChatId {
@@ -44,13 +45,32 @@ class _ChatPageState extends State<ChatPage> {
   // Lấy theme từ URL parameters
   String get _urlTheme {
     final queryParams = Uri.parse(web.window.location.href).queryParameters;
-    return queryParams['theme'] ?? 'dark';
+    return queryParams['theme'] ?? 'light';
   }
 
   @override
   void initState() {
     super.initState();
-    
+
+    ChatService.initUserDataListener();
+
+    ChatService.userStream?.listen((userInfo) {
+      if (mounted) {
+        setState(() {
+          _isWaitingForUser = false; // User data đã nhận được
+        });
+      }
+    });
+
+    // Timeout để không đợi mãi nếu không có user data
+    Timer(const Duration(seconds: 3), () {
+      if (mounted && _isWaitingForUser) {
+        setState(() {
+          _isWaitingForUser = false; // Stop waiting after 3 seconds
+        });
+      }
+    });
+
     // Thông báo iframe đã sẵn sàng
     if (_isIframeMode) {
       _notifyParentReady();
@@ -340,7 +360,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  PreferredSizeWidget? _buildCompactAppBar(bool isDarkMode) {
+  PreferredSizeWidget? _buildCompactAppBar(bool isDarkMode) {    
     return PreferredSize(
       preferredSize: const Size.fromHeight(45),
       child: Container(
@@ -431,6 +451,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildEmptyState(bool isDarkMode) {
+    final user = ChatService.currentUser;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -451,15 +473,53 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Welcome to LUMIR',
-              style: TextStyle(
-                fontSize: _isIframeMode ? 15 : 18,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : Colors.grey.shade800,
+            
+            // Show loading, user greeting, or default welcome
+            if (_isIframeMode && _isWaitingForUser) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isDarkMode ? Colors.white60 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Connecting...',
+                    style: TextStyle(
+                      fontSize: _isIframeMode ? 14 : 16,
+                      color: isDarkMode ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
+            ] else if (user != null) ...[
+              Text(
+                'Hello, ${user.name}!',
+                style: TextStyle(
+                  fontSize: _isIframeMode ? 15 : 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white : Colors.grey.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ] else ...[
+              Text(
+                'Welcome to LUMIR',
+                style: TextStyle(
+                  fontSize: _isIframeMode ? 15 : 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white : Colors.grey.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 8),
             Text(
               'Ask anything or upload a file for analysis',

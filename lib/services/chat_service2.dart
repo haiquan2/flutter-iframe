@@ -1,34 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_openai_stream/env.deploy.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:html' as html;
-
-// User info model
-class UserInfo {
-  final String? username;
-  final String? name; 
-  final String? birthday;
-  final String? sessionId;
-  
-  UserInfo({this.username, this.name, this.birthday, this.sessionId});
-  
-  factory UserInfo.fromMap(Map<String, dynamic> map) {
-    return UserInfo(
-      username: map['username']?.toString() ?? 
-                map['email']?.toString().split('@')[0], // Fallback to email prefix if no username
-      name: map['name']?.toString() ?? 
-            map['displayName']?.toString(), // Support both name and displayName
-      birthday: map['dob']?.toString() ?? 
-                map['birthday']?.toString() ?? 
-                '20/10/2000', // Default fake birthday if not provided
-      sessionId: map['session_id']?.toString(),
-    );
-  }
-}
 
 class WebFile {
   final html.File _file;
@@ -50,63 +26,6 @@ class ChatService {
   static const String sessionsUrl = Env.sessionsUrl;
   static final Uuid _uuid = Uuid();
   static String? _sessionId;
-  static UserInfo? _currentUser;
-  static StreamController<UserInfo>? _userStreamController;
-
-  // Initialize postMessage listener
-  static void initUserDataListener() {
-    _userStreamController = StreamController<UserInfo>.broadcast();
-    
-    html.window.onMessage.listen((event) {
-      try {
-        print('📨 Received postMessage: ${event.data}');
-        
-        // Handle both string and object data
-        Map<String, dynamic>? data;
-        
-        if (event.data is String) {
-          try {
-            data = json.decode(event.data);
-          } catch (e) {
-            print('⚠️ Failed to parse JSON string: $e');
-            return;
-          }
-        } else if (event.data is Map) {
-          data = Map<String, dynamic>.from(event.data);
-        } else {
-          print('⚠️ Unknown message type: ${event.data.runtimeType}');
-          return;
-        }
-        
-        if (data != null && data['type'] == 'USER_INFO' && data['payload'] != null) {
-          final userInfo = UserInfo.fromMap(Map<String, dynamic>.from(data['payload']));
-          _setUserInfo(userInfo);
-          print('✅ Successfully processed USER_INFO message');
-        } else if (data != null && data['type'] == 'PING') {
-          print('🏓 Received PING from parent');
-        } else {
-          print('ℹ️ Ignoring message type: ${data?['type']}');
-        }
-      } catch (e) {
-        print('❌ Error parsing user data: $e');
-        print('❌ Raw event data: ${event.data}');
-      }
-    });
-    
-    print('🎯 ChatService initialized. Waiting for USER_INFO from parent via postMessage...');
-  }
-
-  // Set user info and notify listeners
-  static void _setUserInfo(UserInfo userInfo) {
-    _currentUser = userInfo;
-    _sessionId = userInfo.sessionId; // Use provided session or keep existing
-    _userStreamController?.add(userInfo);
-    print('✅ User logged in: ${userInfo.name} (@${userInfo.username}) - Birthday: ${userInfo.birthday}');
-  }
-
-  // Get user stream
-  static Stream<UserInfo>? get userStream => _userStreamController?.stream;
-  static UserInfo? get currentUser => _currentUser;
 
   // Tự động tạo session
   static Future<String?> _createSession() async {
@@ -129,7 +48,7 @@ class ChatService {
         return sessionId;
       }
     } catch (e) {
-      print('Session creation error: $e');
+      // print('Session creation error: $e');
     }
     return null;
   }
@@ -147,7 +66,7 @@ class ChatService {
     return null;
   }
 
-  // Upload files với streaming response + user data
+  // Upload files với streaming response
   static Stream<String> uploadFilesStream({
     required String question,
     List<WebFile>? files,
@@ -165,10 +84,8 @@ class ChatService {
       final formData = FormData.fromMap({
         'question': question.trim().isEmpty ? 'Analyze this file' : question.trim(),
         'session_id': _sessionId!,
-        // Add user info to request
-        if (_currentUser?.name != null) 'name': _currentUser!.name!,
-        if (_currentUser?.username != null) 'username': _currentUser!.username!,
-        if (_currentUser?.birthday != null) 'birthday': _currentUser!.birthday!,
+        'language': 'vi',
+        'rerank': 'false',
       });
 
       if (files != null) {
@@ -185,10 +102,8 @@ class ChatService {
         }
       }
 
-      print('🚀 Sending request with user: ${_currentUser?.name} (@${_currentUser?.username})');
-
       final response = await dio.post(
-        '$baseUrl/lumir/chat/v1',
+        '$baseUrl/lumir/chat',
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );
@@ -202,11 +117,11 @@ class ChatService {
           await Future.delayed(const Duration(milliseconds: 50));
           yield chunk;
         }
+        // yield answer;
       } else {
         yield 'Sorry, our system is experiencing issues. Please try again later.';
       }
     } catch (e) {
-      print('❌ Chat error: $e');
       yield 'Sorry, our system is experiencing issues. Please try again later.';
     }
   }
@@ -224,6 +139,7 @@ class ChatService {
   }
 
   static List<String> _splitText(String text) {
+  // Chia theo từ nhưng BẢO TOÀN line breaks và spaces
     final List<String> chunks = [];
     int currentIndex = 0;
     const int chunkSize = 30;
@@ -231,14 +147,16 @@ class ChatService {
     while (currentIndex < text.length) {
       int endIndex = currentIndex + chunkSize;
       
+      // Không vượt quá độ dài text
       if (endIndex >= text.length) {
         chunks.add(text.substring(currentIndex));
         break;
       }
       
+      // Tìm space gần nhất để không cắt đứt từ
       int spaceIndex = text.lastIndexOf(' ', endIndex);
       if (spaceIndex > currentIndex) {
-        endIndex = spaceIndex + 1;
+        endIndex = spaceIndex + 1; // +1 để giữ space
       }
       
       chunks.add(text.substring(currentIndex, endIndex));
@@ -256,9 +174,5 @@ class ChatService {
     if (size < 1024) return '$size B';
     if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
     return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-
-  static void dispose() {
-    _userStreamController?.close();
   }
 }
