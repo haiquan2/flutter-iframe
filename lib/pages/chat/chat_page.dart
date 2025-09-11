@@ -24,11 +24,12 @@ class _ChatPageState extends State<ChatPage> {
   final _questionController = TextEditingController();
   final _scrollController = ScrollController();
   StreamSubscription<String>? _streamSubscription;
+  StreamSubscription<UserInfo>? _userSubscription;
   final FocusNode _inputFocusNode = FocusNode();
   bool _isTyping = false;
-  bool _isWaitingForUser = true; // Thêm flag để đợi user data
+  UserInfo? _currentUser; // Local user state
 
-  // Lấy chatId từ widget hoặc URL
+  // Get chatId from widget or URL
   String get _currentChatId {
     if (widget.chatId != null) return widget.chatId!;
     
@@ -36,13 +37,13 @@ class _ChatPageState extends State<ChatPage> {
     return queryParams['chatId'] ?? 'default';
   }
 
-  // Kiểm tra xem có phải iframe mode không
+  // Check if in iframe mode
   bool get _isIframeMode {
     final queryParams = Uri.parse(web.window.location.href).queryParameters;
     return queryParams['iframe'] == 'true';
   }
 
-  // Lấy theme từ URL parameters
+  // Get theme from URL parameters
   String get _urlTheme {
     final queryParams = Uri.parse(web.window.location.href).queryParameters;
     return queryParams['theme'] ?? 'light';
@@ -51,51 +52,53 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    print('🏁 ChatPage initState - ChatId: $_currentChatId');
 
+    // Initialize ChatService
     ChatService.initUserDataListener();
 
-    ChatService.userStream?.listen((userInfo) {
+    // Get any existing user data immediately
+    _currentUser = ChatService.currentUser;
+    if (_currentUser != null) {
+      print('📦 Found existing user data: ${_currentUser!.name}');
+    }
+
+    // Listen to user stream for updates
+    _userSubscription = ChatService.userStream?.listen((userInfo) {
       if (mounted) {
-        print('🔄 User stream received: ${userInfo.name}, rebuilding UI...');
+        print('🔄 User stream received: ${userInfo.name}, updating local state...');
         setState(() {
-          _isWaitingForUser = false; // User data đã nhận được
+          _currentUser = userInfo;
         });
-        print('✅ UI rebuilt with user: ${userInfo.name}');
+        print('✅ Local user state updated: ${userInfo.name}');
       }
     });
 
-    // Timeout để không đợi mãi nếu không có user data
-    Timer(const Duration(seconds: 2), () {
-      if (mounted && _isWaitingForUser) {
-        print('⏰ Timeout: Stop waiting for user data');
-        print('🔍 Current user at timeout: ${ChatService.currentUser?.name}');
-        setState(() {
-          _isWaitingForUser = false; // Stop waiting after 2 seconds
-        });
-      }
-    });
-
-    // Thông báo iframe đã sẵn sàng
+    // Notify parent that iframe is ready
     if (_isIframeMode) {
       _notifyParentReady();
     }
 
     // Listen for focus changes
     _inputFocusNode.addListener(() {
-      setState(() {
-        _isTyping = _inputFocusNode.hasFocus;
-      });
+      if (mounted) {
+        setState(() {
+          _isTyping = _inputFocusNode.hasFocus;
+        });
+      }
     });
+    
+    print('✅ ChatPage initialization complete');
   }
 
   void _notifyParentReady() {
-    // Gửi cả hai format để đảm bảo compatibility
+    // Send iframe ready notification
     web.window.parent?.postMessage({
       'type': 'IFRAME_READY',
       'chatId': _currentChatId,
     }.toString() as JSAny?, '*' as JSAny);
     
-    // Backup với format cũ
+    // Backup with old format
     web.window.parent?.postMessage({
       'type': 'iframe_ready', 
       'chatId': _currentChatId,
@@ -107,6 +110,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     _streamSubscription?.cancel();
+    _userSubscription?.cancel();
     _questionController.dispose();
     _scrollController.dispose();
     _inputFocusNode.dispose();
@@ -157,7 +161,6 @@ class _ChatPageState extends State<ChatPage> {
         ),
       );
     } else {
-      // Cho iframe mode, hiển thị toast nhỏ gọn hơn
       _showCompactToast(message, isSuccess: isSuccess, isError: isError);
     }
   }
@@ -393,24 +396,6 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                // Container(
-                //   width: 28,
-                //   height: 28,
-                //   decoration: BoxDecoration(
-                    // gradient: LinearGradient(
-                    //   colors: [
-                    //     Colors.blue.shade400,
-                    //     Colors.purple.shade400,
-                    //   ],
-                    // ),
-                //     borderRadius: BorderRadius.circular(8),
-                //   ),
-                //   child: const Icon(
-                //     Icons.auto_awesome,
-                //     color: Colors.white,
-                //     size: 16,
-                //   ),
-                // ),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
@@ -464,17 +449,10 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildEmptyState(bool isDarkMode) {
-    final user = ChatService.currentUser;
+    // Use local user state instead of ChatService.currentUser
+    final user = _currentUser;
     
-    // Debug log để track state
-    print('🖼️ Building empty state - User: ${user?.name}, Waiting: $_isWaitingForUser');
-    
-    // Debug chi tiết hơn khi user là null
-    if (user == null) {
-      print('🚨 User is NULL! Debug info:');
-      print('   - _isWaitingForUser: $_isWaitingForUser');
-      print('   - ChatService static state check...');
-    }
+    print('🖼️ Building empty state - Local user: ${user?.name}');
 
     return Center(
       child: Padding(
@@ -497,34 +475,9 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(height: 16),
             
-            // Show loading, user greeting, or default welcome
-            if (_isIframeMode && _isWaitingForUser) ...[
-              // Loading state khi đang đợi user data
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isDarkMode ? Colors.white60 : Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Connecting...',
-                    style: TextStyle(
-                      fontSize: _isIframeMode ? 14 : 16,
-                      color: isDarkMode ? Colors.white60 : Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ] else if (user != null) ...[
-              // Hiển thị chào user khi đã có data
+            // Show user greeting or default welcome
+            if (user != null) ...[
+              // Display user greeting when we have data
               Text(
                 'Hello, ${user.name}!',
                 style: TextStyle(
@@ -535,7 +488,7 @@ class _ChatPageState extends State<ChatPage> {
                 textAlign: TextAlign.center,
               ),
             ] else ...[
-              // Fallback khi không có user data
+              // Fallback when no user data
               Text(
                 'Welcome to LUMIR',
                 style: TextStyle(
