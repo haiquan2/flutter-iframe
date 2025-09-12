@@ -65,9 +65,7 @@ class ChatService {
   static const String _userStorageKey = 'chat_user_info';
   static const String _sessionStorageKey = 'chat_session_id';
 
-  // Persistent getters with fallback to browser storage
   static UserInfo? get currentUser {
-    // First try in-memory data
     if (_currentUserData != null) {
       return _currentUserData;
     }
@@ -212,7 +210,7 @@ class ChatService {
         return sessionId;
       }
     } catch (e) {
-      print('❌ Session creation error: $e');
+      // Silent fail
     }
     return null;
   }
@@ -234,6 +232,7 @@ class ChatService {
   static Stream<String> uploadFilesStream({
     required String question,
     List<WebFile>? files,
+    String language = 'vi', // Default to Vietnamese
   }) async* {
     final user = currentUser; // Use the persistent getter
     
@@ -251,6 +250,7 @@ class ChatService {
       final formDataMap = {
         'question': question.trim().isEmpty ? 'Analyze this file' : question.trim(),
         'session_id': sessionId,
+        'language': language, // Add language parameter
       };
       
       // Add user info to request if available
@@ -263,6 +263,9 @@ class ChatService {
       if (user?.birthday != null) {
         formDataMap['birthday'] = user!.birthday!;
       }
+      
+      // Default has_trading_data to false
+      formDataMap['has_trading_data'] = 'false';
       
       final formData = FormData.fromMap(formDataMap);
 

@@ -45,7 +45,7 @@ class MessageContent extends StatelessWidget {
         ],
       ),
       child: message.isLoading
-          ? buildLoadingIndicator()
+          ? buildLoadingIndicator(message: message.text.isNotEmpty ? message.text : null)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: message.isUser ? MainAxisSize.min : MainAxisSize.max,

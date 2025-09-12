@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Widget buildLoadingIndicator() {
+Widget buildLoadingIndicator({String? message}) {
   return Row(
     mainAxisSize: MainAxisSize.min,
     children: [
@@ -16,7 +16,7 @@ Widget buildLoadingIndicator() {
       ),
       const SizedBox(width: 12),
       Text(
-        'Wait a second...',
+        message ?? 'Wait a second...',
         style: TextStyle(
           color: Colors.grey[600],
           fontSize: 14,

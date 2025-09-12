@@ -28,6 +28,8 @@ class _ChatPageState extends State<ChatPage> {
   final FocusNode _inputFocusNode = FocusNode();
   bool _isTyping = false;
   UserInfo? _currentUser; // Local user state
+  String _selectedLanguage = 'vi'; // Default language
+  Timer? _loadingMessageTimer; // Timer for loading message updates
 
   // Get chatId from widget or URL
   String get _currentChatId {
@@ -101,6 +103,7 @@ class _ChatPageState extends State<ChatPage> {
   void dispose() {
     _streamSubscription?.cancel();
     _userSubscription?.cancel();
+    _loadingMessageTimer?.cancel();
     _questionController.dispose();
     _scrollController.dispose();
     _inputFocusNode.dispose();
@@ -219,7 +222,7 @@ class _ChatPageState extends State<ChatPage> {
       // Add loading bot message
       _messages.add(Message(
         id: _generateMessageId(),
-        text: '',
+        text: 'Thinking...', // Start with first message
         isUser: false,
         timestamp: DateTime.now(),
         isLoading: true,
@@ -234,6 +237,9 @@ class _ChatPageState extends State<ChatPage> {
     
     _scrollToBottom();
 
+    // Start loading message timer for better UX
+    _startLoadingMessageTimer();
+
     try {
       String fullResponse = '';
       final botMessageIndex = _messages.length - 1;
@@ -241,8 +247,12 @@ class _ChatPageState extends State<ChatPage> {
       _streamSubscription = ChatService.uploadFilesStream(
         question: finalMessage,
         files: selectedFiles.isEmpty ? null : selectedFiles,
+        language: _selectedLanguage, // Pass selected language
       ).listen(
         (chunk) {
+          // Cancel loading timer when we start receiving response
+          _loadingMessageTimer?.cancel();
+          
           fullResponse += chunk;
           if (mounted) {
             setState(() {
@@ -255,7 +265,8 @@ class _ChatPageState extends State<ChatPage> {
           }
         },
         onError: (error) {
-          print('Streaming error: $error');
+          _loadingMessageTimer?.cancel();
+          // print('Streaming error: $error');
           if (mounted) {
             setState(() {
               _messages[botMessageIndex] = _messages[botMessageIndex].copyWith(
@@ -268,6 +279,7 @@ class _ChatPageState extends State<ChatPage> {
           }
         },
         onDone: () {
+          _loadingMessageTimer?.cancel();
           if (mounted) {
             setState(() {
               _isUploading = false;
@@ -276,6 +288,7 @@ class _ChatPageState extends State<ChatPage> {
         },
       );
     } catch (e) {
+      _loadingMessageTimer?.cancel();
       if (mounted) {
         setState(() {
           final botMessageIndex = _messages.length - 1;
@@ -290,8 +303,43 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _startLoadingMessageTimer() {
+    final loadingMessages = [
+      'Thinking...',
+      'Still thinking...',
+      'Almost there...',
+      'Processing your request...'
+    ];
+    
+    int messageIndex = 0;
+    
+    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted && _isUploading && _messages.isNotEmpty) {
+        final lastMessageIndex = _messages.length - 1;
+        if (_messages[lastMessageIndex].isLoading) {
+          setState(() {
+            _messages[lastMessageIndex] = _messages[lastMessageIndex].copyWith(
+              text: loadingMessages[messageIndex % loadingMessages.length],
+            );
+          });
+          messageIndex++;
+          
+          // Stop after 3 cycles (15 seconds)
+          if (messageIndex >= 3) {
+            timer.cancel();
+          }
+        } else {
+          timer.cancel();
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   void _stopStreaming() {
     _streamSubscription?.cancel();
+    _loadingMessageTimer?.cancel();
     setState(() {
       _isUploading = false;
       if (_messages.isNotEmpty && _messages.last.isLoading) {
@@ -397,6 +445,42 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                 ),
+                
+                // Language toggle button
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedLanguage = _selectedLanguage == 'vi' ? 'en' : 'vi';
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          _selectedLanguage.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                
                 if (_messages.isNotEmpty)
                   IconButton(
                     onPressed: _clearAll,
@@ -441,8 +525,6 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildEmptyState(bool isDarkMode) {
     // Use local user state instead of ChatService.currentUser
     final user = _currentUser;
-    
-    print('🖼️ Building empty state - Local user: ${user?.name}');
 
     return Center(
       child: Padding(

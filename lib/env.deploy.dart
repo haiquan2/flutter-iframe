@@ -5,5 +5,6 @@ class Env {
 
   static const sessionsUrl = String.fromEnvironment(
     'SESSIONS_URL',
+    
   );
 }
