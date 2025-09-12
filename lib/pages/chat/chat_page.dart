@@ -219,10 +219,13 @@ class _ChatPageState extends State<ChatPage> {
         files: _files.map((f) => f.name).toList(),
       ));
 
-      // Add loading bot message
+      final initialLoadingText = _selectedLanguage == 'vi' 
+        ? 'Vui lòng chờ trong giây lát...' 
+        : 'Waiting for seconds...';
+        
       _messages.add(Message(
         id: _generateMessageId(),
-        text: 'Thinking...',
+        text: initialLoadingText,
         isUser: false,
         timestamp: DateTime.now(),
         isLoading: true,
@@ -305,27 +308,34 @@ class _ChatPageState extends State<ChatPage> {
 
   void _startLoadingMessageTimer() {
     final loadingMessages = [
-      'Thinking...',
-      'Still thinking...',
-      'Almost there...',
-      'Processing your request...'
+      'Waiting for seconds...',
+      'Collecting data...',
+      'Think longer for better answer...',
+      'Almost there...'
     ];
+    final loadingMessagesVietnamese = [
+      'Vui lòng chờ trong giây lát...',
+      'Đang thu thập dữ liệu...',
+      'Suy nghĩ kĩ hơn để kết quả tốt hơn...',
+      'Sắp xong rồi...'
+    ];
+
+    int messageIndex = 1; // Start from 1 since initial message is already set
     
-    int messageIndex = 0;
-    
-    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted && _isUploading && _messages.isNotEmpty) {
         final lastMessageIndex = _messages.length - 1;
         if (_messages[lastMessageIndex].isLoading) {
+          final selectedMessages = _selectedLanguage == 'vi' ? loadingMessagesVietnamese : loadingMessages;
           setState(() {
             _messages[lastMessageIndex] = _messages[lastMessageIndex].copyWith(
-              text: loadingMessages[messageIndex % loadingMessages.length],
+              text: selectedMessages[messageIndex % selectedMessages.length],
             );
           });
           messageIndex++;
           
-          // Stop after 3 cycles (15 seconds)
-          if (messageIndex >= 3) {
+          // Stop after 4 cycles (12 seconds) - covers all messages
+          if (messageIndex >= 4) {
             timer.cancel();
           }
         } else {

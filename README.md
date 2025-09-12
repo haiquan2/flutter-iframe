@@ -1,16 +1,76 @@
-# flutter_openai_stream
+# LUMIR Chat Widget
 
-A new Flutter project.
+Flutter Web chat widget tích hợp vào website qua iframe.
 
-## Getting Started
+## 🚀 Setup
 
-This project is a starting point for a Flutter application.
+```bash
+git clone https://github.com/haiquan2/flutter-iframe.git
+cd flutter-iframe
+flutter pub get
+```
 
-A few resources to get you started if this is your first Flutter project:
+## ⚙️ Environment
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+# .env hoặc dart-define
+BASE_URL=you_endpoint
+SESSIONS_URL=you_endpoint
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🏃‍♂️ Development
+
+```bash
+flutter run -d chrome --web-port 8080 --dart-define=BASE_URL=your_endpoint --dart-define=SESSIONS_URL=your_end_point
+flutter build web --release                    # Production build
+```
+
+## 🌐 Integration
+
+
+### Direct Iframe
+```html
+<iframe src="https://your-app.com/?iframe=true&theme=light" 
+    width="400" height="600">
+</iframe>
+```
+
+### PostMessage API
+```javascript
+iframe.contentWindow.postMessage({
+  type: 'USER_INFO',
+  payload: { name: 'User', email: 'user@email.com' }
+}, '*');
+```
+
+## 📁 Structure
+
+```
+lib/
+├── core/
+│   ├── theme/             # Theme & color schemes
+│   └── provider/          # State management providers
+├── models/
+│   └── message.dart       # Chat message model
+├── pages/
+│   ├── chat/              # Main chat interface
+│   └── home/              # Landing page
+├── services/
+│   └── chat_service.dart  # API calls & business logic
+├── widgets/
+│   ├── common/            # Reusable components
+│   └── messages/          # Message UI components
+├── env.deploy.dart        # Environment config
+└── main.dart              # App entry point
+```
+
+## 🛠 Tech Stack
+
+- **Flutter Web** (>=3.3.0)
+- **Provider** (State management)
+- **GoRouter** (Routing)
+- **Dio** (HTTP client)
+
+## 📞 Support
+
+- Issues: [GitHub](https://github.com/haiquan2/flutter-iframe/issues)

@@ -16,7 +16,7 @@ Widget buildLoadingIndicator({String? message}) {
       ),
       const SizedBox(width: 12),
       Text(
-        message ?? 'Wait a second...',
+        message ?? 'Thinking...',
         style: TextStyle(
           color: Colors.grey[600],
           fontSize: 14,
