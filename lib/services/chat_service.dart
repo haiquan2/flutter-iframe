@@ -221,7 +221,7 @@ class ChatService {
   static Future<List<WebFile>?> pickFiles() async {
     final html.InputElement input = html.InputElement(type: 'file');
     input.multiple = true;
-    input.accept = '.pdf,.doc,.docx,.txt,.csv';
+    input.accept = '.pdf,.doc,.docx,.txt,.csv, .xlsx, .xls';
     input.click();
     await input.onChange.first;
     if (input.files != null && input.files!.isNotEmpty) {
