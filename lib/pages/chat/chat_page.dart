@@ -139,7 +139,7 @@ class _ChatPageState extends State<ChatPage> {
       });
       
       if (mounted) {
-        _showSnackBar('Uploaded ${files.length} file(s)', isSuccess: true);
+        // _showSnackBar('Uploaded ${files.length} file(s)', isSuccess: true);
       }
     }
   }
@@ -201,7 +201,7 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() async {
     final messageText = _questionController.text.trim();
     if (messageText.isEmpty && _files.isEmpty) {
-      _showSnackBar('Please enter a message or select files to upload.', isError: true);
+      // _showSnackBar('Please enter a message or select files to upload.', isError: true);
       return;
     }
 
@@ -222,7 +222,7 @@ class _ChatPageState extends State<ChatPage> {
       // Add loading bot message
       _messages.add(Message(
         id: _generateMessageId(),
-        text: 'Thinking...', // Start with first message
+        text: 'Thinking...',
         isUser: false,
         timestamp: DateTime.now(),
         isLoading: true,
@@ -275,7 +275,7 @@ class _ChatPageState extends State<ChatPage> {
               );
               _isUploading = false;
             });
-            _showSnackBar('Sorry, an error occurred!');
+            // _showSnackBar('Sorry, an error occurred!');
           }
         },
         onDone: () {
@@ -298,7 +298,7 @@ class _ChatPageState extends State<ChatPage> {
           );
           _isUploading = false;
         });
-        _showSnackBar('Sorry, an error occurred!', isError: true);
+        // _showSnackBar('Sorry, an error occurred!', isError: true);
       }
     }
   }
@@ -313,7 +313,7 @@ class _ChatPageState extends State<ChatPage> {
     
     int messageIndex = 0;
     
-    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (mounted && _isUploading && _messages.isNotEmpty) {
         final lastMessageIndex = _messages.length - 1;
         if (_messages[lastMessageIndex].isLoading) {
@@ -363,7 +363,7 @@ class _ChatPageState extends State<ChatPage> {
     });
     _questionController.clear();
     ChatService.clearSession();
-    _showSnackBar('The conversation has been cleared!', isSuccess: true);
+    // _showSnackBar('The conversation has been cleared!', isSuccess: true);
   }
 
   void _removeFile(int index) {
@@ -416,7 +416,7 @@ class _ChatPageState extends State<ChatPage> {
 
   PreferredSizeWidget? _buildCompactAppBar(bool isDarkMode) {    
     return PreferredSize(
-      preferredSize: const Size.fromHeight(45),
+      preferredSize: const Size.fromHeight(52), // Increased height
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.primaryLumir,
@@ -431,7 +431,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const SizedBox(width: 10),
@@ -446,34 +446,95 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
                 
-                // Language toggle button
+                // Language toggle button - Enhanced UI
                 Container(
                   margin: const EdgeInsets.only(right: 8),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedLanguage = _selectedLanguage == 'vi' ? 'en' : 'vi';
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
+                  child: Tooltip(
+                    message: 'Change Language (${_selectedLanguage == 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'})',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedLanguage = _selectedLanguage == 'vi' ? 'en' : 'vi';
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          _selectedLanguage.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.language,
+                                size: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Vietnamese option
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _selectedLanguage == 'vi' 
+                                          ? AppColors.primaryLumir 
+                                          : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'VI',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: _selectedLanguage == 'vi' 
+                                            ? Colors.white 
+                                            : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    // English option
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _selectedLanguage == 'en' 
+                                          ? AppColors.primaryLumir 
+                                          : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'EN',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: _selectedLanguage == 'en' 
+                                            ? Colors.white 
+                                            : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
