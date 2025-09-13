@@ -866,6 +866,12 @@ class _ChatPageState extends State<ChatPage> {
                     enabled: !_isUploading,
                     maxLines: null,
                     minLines: 1,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) {
+                      if (!_isUploading) {
+                        _sendMessage();
+                      }
+                    },
                     style: TextStyle(
                       fontSize: _isIframeMode ? 13 : 14,
                       color: isDarkMode ? Colors.white : Colors.black87,
@@ -884,7 +890,6 @@ class _ChatPageState extends State<ChatPage> {
                         vertical: _isIframeMode ? 8 : 10,
                       ),
                     ),
-                    onSubmitted: (_) => _isUploading ? null : _sendMessage(),
                   ),
                 ),
               ),

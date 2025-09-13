@@ -219,7 +219,7 @@ class ChatService {
   static Future<List<WebFile>?> pickFiles() async {
     final html.InputElement input = html.InputElement(type: 'file');
     input.multiple = true;
-    input.accept = '.pdf,.doc,.docx,.txt,.csv, .xlsx, .xls';
+    input.accept = '.xlsx';
     input.click();
     await input.onChange.first;
     if (input.files != null && input.files!.isNotEmpty) {
@@ -250,7 +250,7 @@ class ChatService {
       final formDataMap = {
         'question': question.trim().isEmpty ? 'Analyze this file' : question.trim(),
         'session_id': sessionId,
-        'language': language, // Add language parameter
+        'language': language, 
       };
       
       // Add user info to request if available
@@ -264,8 +264,8 @@ class ChatService {
         formDataMap['birthday'] = user!.birthday!;
       }
       
-      // Default has_trading_data to false
-      formDataMap['has_trading_data'] = 'false';
+      // Set has_trading_data based on whether files are uploaded
+      formDataMap['has_trading_data'] = (files != null && files.isNotEmpty) ? 'true' : 'false';
       
       final formData = FormData.fromMap(formDataMap);
 
