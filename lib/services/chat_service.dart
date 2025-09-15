@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_openai_stream/env.deploy.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:uuid/uuid.dart';
 import 'dart:html' as html;
 
 // User info model
@@ -53,7 +52,6 @@ class WebFile {
 class ChatService {
   static const String baseUrl = Env.baseUrl;
   static const String sessionsUrl = Env.sessionsUrl;
-  static final Uuid _uuid = Uuid();
   
   // Use getters/setters to ensure data persistence
   static String? _sessionId;
@@ -182,7 +180,11 @@ class ChatService {
   // Auto create session with better error handling
   static Future<String?> _createSession() async {
     try {
-      final userId = _uuid.v4();
+      // Generate a simple user ID using timestamp + random
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final random = (DateTime.now().microsecond * 1000 + DateTime.now().millisecond).toString();
+      final userId = 'user_${timestamp}_$random';
+      
       final dio = Dio();
       final response = await dio.post(
         sessionsUrl,
@@ -190,7 +192,7 @@ class ChatService {
           "user_id": userId,
           "expires_in_hours": 24,
           "metadata": {},
-          "temp_collection_name": "temp_${userId.substring(0, 8)}"
+          "temp_collection_name": "temp_${userId.substring(5, 13)}" // Use part of timestamp
         },
         options: Options(
           headers: {'accept': 'application/json', 'Content-Type': 'application/json'},
