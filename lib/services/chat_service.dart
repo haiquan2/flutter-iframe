@@ -228,11 +228,14 @@ class ChatService {
   }) async* {
     final user = currentUser; // Use the persistent getter
     
-    String? sessionId = await _createSession();
+    String? sessionId = currentSessionId;
+    if (sessionId == null) {
+      sessionId = await _createSession();
       if (sessionId == null) {
         yield 'Sorry, our system is experiencing issues. Please try again later.';
         return;
       }
+    }
 
     try {
       final dio = Dio();
