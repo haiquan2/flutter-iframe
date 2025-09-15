@@ -11,9 +11,8 @@ class UserInfo {
   final String? username;
   final String? name; 
   final String? birthday;
-  final String? sessionId;
   
-  UserInfo({this.username, this.name, this.birthday, this.sessionId});
+  UserInfo({this.username, this.name, this.birthday});
   
   factory UserInfo.fromMap(Map<String, dynamic> map) {
     return UserInfo(
@@ -24,13 +23,12 @@ class UserInfo {
       birthday: map['dob']?.toString() ?? 
                 map['birthday']?.toString() ?? 
                 '20/10/2000',
-      sessionId: map['session_id']?.toString(),
     );
   }
   
   @override
   String toString() {
-    return 'UserInfo(name: $name, username: $username, sessionId: $sessionId)';
+    return 'UserInfo(name: $name, username: $username)';
   }
 }
 
@@ -152,22 +150,12 @@ class ChatService {
   static void _setUserInfo(UserInfo userInfo) {
     // Set in memory
     _currentUserData = userInfo;
-    // DO NOT use sessionId from user data - always use API-generated sessionId
-    // _sessionId = userInfo.sessionId ?? _sessionId;
-    
-    // Persist to browser storage
     try {
       html.window.sessionStorage[_userStorageKey] = json.encode({
         'username': userInfo.username,
         'name': userInfo.name,
         'birthday': userInfo.birthday,
-        // Remove session_id from user storage since we generate it from API
-        // 'session_id': userInfo.sessionId,
       });
-      
-      if (_sessionId != null) {
-        html.window.sessionStorage[_sessionStorageKey] = _sessionId!;
-      }
     } catch (e) {
       // Silent fail
     }
@@ -240,14 +228,11 @@ class ChatService {
   }) async* {
     final user = currentUser; // Use the persistent getter
     
-    String? sessionId = currentSessionId;
-    if (sessionId == null) {
-      sessionId = await _createSession();
+    String? sessionId = await _createSession();
       if (sessionId == null) {
         yield 'Sorry, our system is experiencing issues. Please try again later.';
         return;
       }
-    }
 
     try {
       final dio = Dio();
