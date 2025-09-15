@@ -152,7 +152,8 @@ class ChatService {
   static void _setUserInfo(UserInfo userInfo) {
     // Set in memory
     _currentUserData = userInfo;
-    _sessionId = userInfo.sessionId ?? _sessionId;
+    // DO NOT use sessionId from user data - always use API-generated sessionId
+    // _sessionId = userInfo.sessionId ?? _sessionId;
     
     // Persist to browser storage
     try {
@@ -160,7 +161,8 @@ class ChatService {
         'username': userInfo.username,
         'name': userInfo.name,
         'birthday': userInfo.birthday,
-        'session_id': userInfo.sessionId,
+        // Remove session_id from user storage since we generate it from API
+        // 'session_id': userInfo.sessionId,
       });
       
       if (_sessionId != null) {
