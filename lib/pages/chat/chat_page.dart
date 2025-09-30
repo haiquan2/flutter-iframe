@@ -811,29 +811,23 @@ class _ChatPageState extends State<ChatPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               // File attach button
-              Material(
+                Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _isUploading ? null : _pickFiles,
+                  onTap: null, // Disabled
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    width: _isIframeMode ? 32 : 40,
-                    height: _isIframeMode ? 32 : 40,
-                    decoration: BoxDecoration(
-                      color: _files.isNotEmpty 
-                        ? Colors.blue.withOpacity(0.1)
-                        : (isDarkMode 
-                            ? Colors.white.withOpacity(0.05) 
-                            : Colors.grey.shade100),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      Icons.attach_file,
-                      size: _isIframeMode ? 18 : 20,
-                      color: _files.isNotEmpty 
-                        ? Colors.blue.shade600
-                        : (isDarkMode ? Colors.white60 : Colors.grey.shade600),
-                    ),
+                  width: _isIframeMode ? 32 : 40,
+                  height: _isIframeMode ? 32 : 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2), // visually disabled
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(
+                    Icons.attach_file,
+                    size: _isIframeMode ? 18 : 20,
+                    color: Colors.grey.shade400, // visually disabled
+                  ),
                   ),
                 ),
               ),

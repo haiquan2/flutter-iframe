@@ -27,8 +27,25 @@ List<Widget> _parseToWidgets(String text, bool isDark) {
       continue;
     }
     
-    // Check if line is bullet point: * text OR *   **text** (with spaces)
+    // Check for horizontal rule: --- or ___
+    if (line.trim() == '---' || line.trim() == '___') {
+      widgets.add(_createHorizontalRule(isDark));
+      continue;
+    }
+    
+    // Check for headers: # ## ### #### ##### ######
     final trimmedLine = line.trimLeft();
+    if (trimmedLine.startsWith('#')) {
+      final headerMatch = RegExp(r'^(#{1,6})\s+(.+)').firstMatch(trimmedLine);
+      if (headerMatch != null) {
+        final level = headerMatch.group(1)!.length;
+        final content = headerMatch.group(2)!;
+        widgets.add(_createHeader(content, level, isDark));
+        continue;
+      }
+    }
+    
+    // Check if line is bullet point: * text OR *   **text** (with spaces)
     if (trimmedLine.startsWith('* ') || trimmedLine.startsWith('*\t')) {
       // Bullet point: extract content after "* " or "*\t"
       String content;
@@ -48,6 +65,63 @@ List<Widget> _parseToWidgets(String text, bool isDark) {
   }
   
   return widgets.isEmpty ? [const SizedBox.shrink()] : widgets;
+}
+
+Widget _createHeader(String text, int level, bool isDark) {
+  double fontSize;
+  FontWeight fontWeight;
+  
+  switch (level) {
+    case 1:
+      fontSize = 20;
+      fontWeight = FontWeight.bold;
+      break;
+    case 2:
+      fontSize = 18;
+      fontWeight = FontWeight.bold;
+      break;
+    case 3:
+      fontSize = 16;
+      fontWeight = FontWeight.w600;
+      break;
+    case 4:
+      fontSize = 15;
+      fontWeight = FontWeight.w600;
+      break;
+    case 5:
+      fontSize = 14;
+      fontWeight = FontWeight.w600;
+      break;
+    default:
+      fontSize = 14;
+      fontWeight = FontWeight.w500;
+      break;
+  }
+  
+  return Padding(
+    padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+    child: SelectableText.rich(
+      TextSpan(children: _parseInlineFormatting(text.trim(), isDark)),
+      style: TextStyle(
+        color: isDark ? Colors.white : Colors.black87,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        height: 1.3,
+      ),
+    ),
+  );
+}
+
+Widget _createHorizontalRule(bool isDark) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 0.0), // Reduced vertical space
+    child: Container(
+      height: 0.2,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[600] : Colors.grey[300],
+      ),
+    ),
+  );
 }
 
 Widget _createParagraph(String text, bool isDark) {

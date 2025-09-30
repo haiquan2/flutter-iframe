@@ -179,7 +179,7 @@ class ChatService {
       final response = await dio.post(
         sessionsUrl,
         data: {
-          "user_id": userId,
+          // "user_id": userId,
           "expires_in_hours": 24,
           "metadata": {},
           "temp_collection_name": "temp_${userId.substring(5, 13)}" // Use part of timestamp
@@ -211,7 +211,7 @@ class ChatService {
   static Future<List<WebFile>?> pickFiles() async {
     final html.InputElement input = html.InputElement(type: 'file');
     input.multiple = true;
-    input.accept = '.xlsx';
+    input.accept = '';
     input.click();
     await input.onChange.first;
     if (input.files != null && input.files!.isNotEmpty) {
@@ -245,7 +245,6 @@ class ChatService {
         'language': language, 
       };
       
-      // Add user info to request if available
       if (user?.name != null) {
         formDataMap['name'] = user!.name!;
       }
@@ -255,6 +254,24 @@ class ChatService {
       if (user?.birthday != null) {
         formDataMap['birthday'] = user!.birthday!;
       }
+
+      // if (user?.name != null) {
+      //   formDataMap['name'] = user!.name!;
+      // } else {
+      //   formDataMap['name'] = 'Nguyen Van Test';
+      // }
+      
+      // if (user?.username != null) {
+      //   formDataMap['username'] = user!.username!;
+      // } else {
+      //   formDataMap['username'] = 'testuser123';
+      // }
+      
+      // if (user?.birthday != null) {
+      //   formDataMap['birthday'] = user!.birthday!;
+      // } else {
+      //   formDataMap['birthday'] = '15/03/1995';
+      // }
       
       // Set has_trading_data based on whether files are uploaded
       formDataMap['has_trading_data'] = (files != null && files.isNotEmpty) ? 'true' : 'false';
@@ -276,7 +293,7 @@ class ChatService {
       }
 
       final response = await dio.post(
-        '$baseUrl/lumir/chat/v1',
+        '$baseUrl/lumir/chat/v4',
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
