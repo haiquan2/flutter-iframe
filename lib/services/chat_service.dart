@@ -179,7 +179,7 @@ class ChatService {
       final response = await dio.post(
         sessionsUrl,
         data: {
-          // "user_id": userId,
+          "user_id": userId,
           "expires_in_hours": 24,
           "metadata": {},
           "temp_collection_name": "temp_${userId.substring(5, 13)}" // Use part of timestamp
